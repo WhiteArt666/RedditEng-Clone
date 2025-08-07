@@ -1,0 +1,138 @@
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  avatar?: string;
+  bio?: string;
+  englishLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Native';
+  karma: number;
+  isVerified: boolean;
+  joinedAt: string;
+}
+
+export interface Post {
+  _id: string;
+  title: string;
+  content: string;
+  type: 'text' | 'flashcard' | 'grammar' | 'vocabulary' | 'pronunciation' | 'question';
+  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General';
+  author: {
+    _id: string;
+    username: string;
+    avatar?: string;
+    englishLevel: string;
+    karma: number;
+    isVerified?: boolean;
+  };
+  upvotes: string[];
+  downvotes: string[];
+  score: number;
+  commentCount: number;
+  tags: string[];
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  isAiGenerated: boolean;
+  aiSuggestions?: {
+    grammarCheck?: string;
+    betterPhrase?: string;
+    pronunciation?: string;
+  };
+  attachments?: {
+    type: 'image' | 'audio';
+    url: string;
+    publicId: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Comment {
+  _id: string;
+  content: string;
+  author: {
+    _id: string;
+    username: string;
+    avatar?: string;
+    englishLevel: string;
+    karma: number;
+    isVerified?: boolean;
+  };
+  post: string;
+  parent?: string;
+  upvotes: string[];
+  downvotes: string[];
+  score: number;
+  depth: number;
+  isAiGenerated: boolean;
+  aiSuggestions?: {
+    grammarCheck?: string;
+    betterPhrase?: string;
+  };
+  replies?: Comment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
+  logout: () => void;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}
+
+export interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+  englishLevel?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Native';
+  bio?: string;
+}
+
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
+export interface CreatePostData {
+  title: string;
+  content: string;
+  type?: 'text' | 'flashcard' | 'grammar' | 'vocabulary' | 'pronunciation' | 'question';
+  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General';
+  tags?: string[];
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+}
+
+export interface CreateCommentData {
+  content: string;
+  postId: string;
+  parentId?: string;
+}
+
+export interface VoteData {
+  voteType: 'up' | 'down' | 'none';
+}
+
+export interface ApiResponse<T> {
+  message: string;
+  data?: T;
+  token?: string;
+  user?: User;
+  post?: Post;
+  posts?: Post[];
+  comment?: Comment;
+  comments?: Comment[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface ApiError {
+  message: string;
+  errors?: string[];
+}
