@@ -4,7 +4,7 @@ export interface IPost extends Document {
   title: string;
   content: string;
   type: 'text' | 'flashcard' | 'grammar' | 'vocabulary' | 'pronunciation' | 'question';
-  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General';
+  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General' | 'ShortVideo';
   author: mongoose.Types.ObjectId;
   upvotes: mongoose.Types.ObjectId[];
   downvotes: mongoose.Types.ObjectId[];
@@ -46,7 +46,7 @@ const PostSchema = new Schema<IPost>({
   },
   category: {
     type: String,
-    enum: ['Grammar', 'Vocabulary', 'Speaking', 'Listening', 'Writing', 'Reading', 'IELTS', 'TOEFL', 'General'],
+    enum: ['Grammar', 'Vocabulary', 'Speaking', 'Listening', 'Writing', 'Reading', 'IELTS', 'TOEFL', 'General', 'ShortVideo'],
     required: true
   },
   author: {

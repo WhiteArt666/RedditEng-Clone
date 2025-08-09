@@ -15,7 +15,7 @@ export interface Post {
   title: string;
   content: string;
   type: 'text' | 'flashcard' | 'grammar' | 'vocabulary' | 'pronunciation' | 'question';
-  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General';
+  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General' | 'ShortVideo';
   author: {
     _id: string;
     username: string;
@@ -100,7 +100,7 @@ export interface CreatePostData {
   title: string;
   content: string;
   type?: 'text' | 'flashcard' | 'grammar' | 'vocabulary' | 'pronunciation' | 'question';
-  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General';
+  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General' | 'ShortVideo';
   tags?: string[];
   difficulty?: 'Easy' | 'Medium' | 'Hard';
 }

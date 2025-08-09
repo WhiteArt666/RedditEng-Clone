@@ -149,7 +149,7 @@ const CreatePostPage: React.FC = () => {
   };
 
   const getUploadedImages = () => uploadedFiles.filter(file => file.resourceType === 'image');
-  const getUploadedAudios = () => uploadedFiles.filter(file => file.resourceType === 'audio' || file.resourceType === 'video');
+  const getUploadedAudios = () => uploadedFiles.filter(file => file.resourceType === 'audio');
   const getUploadedVideos = () => uploadedFiles.filter(file => file.resourceType === 'video');
 
   const addTag = () => {
@@ -256,13 +256,8 @@ const CreatePostPage: React.FC = () => {
       });
 
       cloudinaryAudios.forEach(file => {
-        if (file.resourceType === 'video' && file.format === 'mp4') {
-          contentWithMedia += `\n\n🎥 [Video: ${file.originalFilename}](${file.secureUrl})`;
-          console.log('Added Cloudinary video as audio:', file.secureUrl);
-        } else {
-          contentWithMedia += `\n\n🎵 [Audio: ${file.originalFilename}](${file.secureUrl})`;
-          console.log('Added Cloudinary audio:', file.secureUrl);
-        }
+        contentWithMedia += `\n\n🎵 [Audio: ${file.originalFilename}](${file.secureUrl})`;
+        console.log('Added Cloudinary audio:', file.secureUrl);
       });
 
       cloudinaryVideos.forEach(file => {
