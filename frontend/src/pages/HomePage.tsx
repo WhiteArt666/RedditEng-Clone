@@ -260,9 +260,11 @@ const HomePage: React.FC<HomePageProps> = ({ sortBy = 'hot' }) => {
       )}
 
       {/* Posts */}
-      <div className={viewMode === 'video' ? 'pt-16' : ''}>
+      <div className={viewMode === 'video' ? 'h-screen overflow-hidden' : ''}>
         {viewMode === 'video' ? (
-          <VideoFeed posts={posts} onVote={handleVote} videoMode={videoMode} />
+          <div className="h-full w-full">
+            <VideoFeed posts={posts} onVote={handleVote} videoMode={videoMode} />
+          </div>
         ) : (
           <div className="space-y-4">
             {posts.length > 0 ? (

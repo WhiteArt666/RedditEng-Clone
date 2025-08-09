@@ -5,9 +5,7 @@ import {
   ArrowDown, 
   MessageCircle, 
   Share2,
-  User,
-  Play,
-  Pause
+  User
 } from 'lucide-react';
 import type { Post } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -28,22 +26,25 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
   );
   const [score, setScore] = useState(post.score);
   const [isVoting, setIsVoting] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false); // Start unmuted for both modes
 
-  // Auto-play when video comes into view
+  // Auto-play when video comes into view (only in fullscreen mode)
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || videoMode !== 'fullscreen') return;
+
+    // Set initial state
+    video.muted = isMuted;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            // Auto play when in view
             video.play().catch(console.error);
-            setIsPlaying(true);
           } else {
+            // Pause when out of view
             video.pause();
-            setIsPlaying(false);
           }
         });
       },
@@ -52,7 +53,17 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
 
     observer.observe(video);
     return () => observer.disconnect();
-  }, []);
+  }, [videoMode, isMuted]);
+
+  // Also ensure video plays when component mounts
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = isMuted;
+      // Auto-play for both modes
+      video.play().catch(console.error);
+    }
+  }, [isMuted]);
 
   // Extract video URL from content
   const getVideoUrl = (content: string) => {
@@ -90,14 +101,19 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
   const togglePlay = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const video = e.currentTarget.parentElement?.querySelector('video');
+    const video = videoRef.current;
     if (video) {
-      if (video.paused) {
-        video.play();
-        setIsPlaying(true);
+      if (videoMode === 'fullscreen') {
+        // In fullscreen mode, only toggle mute
+        setIsMuted(!isMuted);
+        video.muted = !isMuted;
       } else {
-        video.pause();
-        setIsPlaying(false);
+        // In compact mode, toggle play/pause
+        if (video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
       }
     }
   };
@@ -106,63 +122,79 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
 
   return (
     <div 
-      className="relative bg-black overflow-hidden rounded-lg" 
+      className={`relative bg-black overflow-hidden ${
+        videoMode === 'fullscreen' 
+          ? 'w-full h-full' 
+          : 'w-full h-full'
+      }`}
       style={videoMode === 'fullscreen' 
-        ? { width: '100vw', height: 'calc(100vh - 4rem)', maxWidth: 'none', borderRadius: '0' }
-        : { width: '90vw', maxWidth: '400px', height: '600px' }
+        ? { height: '100vh', maxHeight: '100vh' }
+        : { height: '100vh', maxHeight: '100vh' }
       }
     >
       {/* Video */}
-      <video
-        ref={videoRef}
-        className="w-full h-full object-cover"
-        loop
-        muted
-        playsInline
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-      >
-        <source src={videoUrl} type="video/mp4" />
-        Your browser does not support the video element.
-      </video>
+      <div className="relative group">
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover cursor-pointer"
+          loop
+          muted={isMuted}
+          playsInline
+          autoPlay
+          controls={videoMode === 'compact'}
+          preload="metadata"
+          onClick={togglePlay}
+          src={videoUrl || ''}
+        >
+          Your browser does not support the video element.
+        </video>
 
-      {/* Play/Pause Overlay */}
-      <button
-        onClick={togglePlay}
-        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 opacity-0 hover:opacity-100 transition-opacity"
-      >
-        {isPlaying ? (
-          <Pause className="w-16 h-16 text-white" />
-        ) : (
-          <Play className="w-16 h-16 text-white" />
-        )}
-      </button>
+        {/* Mute button for both modes - positioned on the right */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsMuted(!isMuted);
+            if (videoRef.current) {
+              videoRef.current.muted = !isMuted;
+            }
+          }}
+          className="absolute top-4 right-4 bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition-opacity z-10"
+        >
+          {isMuted ? (
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.828 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.828l3.555-3.793A1 1 0 019.383 3.076zM8 5.04L5.045 7.293A1 1 0 004.414 7H3v6h1.414a1 1 0 00.631.293L8 14.96V5.04zM16.707 9.293a1 1 0 00-1.414 1.414L16.586 12l-1.293 1.293a1 1 0 101.414 1.414L18 13.414l1.293 1.293a1 1 0 001.414-1.414L19.414 12l1.293-1.293a1 1 0 00-1.414-1.414L18 10.586l-1.293-1.293z" clipRule="evenodd" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.793L4.828 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.828l3.555-3.793A1 1 0 019.383 3.076zM8 5.04L5.045 7.293A1 1 0 004.414 7H3v6h1.414a1 1 0 00.631.293L8 14.96V5.04zm4.553 2.838a1 1 0 011.414 0 5 5 0 010 7.071 1 1 0 01-1.414-1.414 3 3 0 000-4.243 1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          )}
+        </button>
+      </div>
 
       {/* Content Overlay */}
-      <div className={videoMode === 'fullscreen'
-        ? "absolute bottom-0 left-0 right-20 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
-        : "absolute bottom-0 left-0 right-14 p-4 bg-gradient-to-t from-black/70 to-transparent"
-      }>
+      <div className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent ${
+        videoMode === 'fullscreen' ? 'right-20' : 'right-16'
+      }`}>
         {/* Author Info */}
-        <div className={`flex items-center space-x-3 ${videoMode === 'fullscreen' ? 'mb-3' : 'mb-2'}`}>
-          <div className={`bg-white rounded-full flex items-center justify-center ${
-            videoMode === 'fullscreen' ? 'w-10 h-10' : 'w-8 h-8'
-          }`}>
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
             {post.author.avatar ? (
               <img 
                 src={post.author.avatar} 
                 alt={post.author.username}
-                className={`rounded-full object-cover ${videoMode === 'fullscreen' ? 'w-10 h-10' : 'w-8 h-8'}`}
+                className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <User size={videoMode === 'fullscreen' ? 20 : 16} className="text-gray-600" />
+              <User size={16} className="text-gray-600" />
             )}
           </div>
-          <div>
-            <p className={`text-white font-semibold ${videoMode === 'fullscreen' ? 'text-base' : 'text-sm'}`}>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-semibold text-sm truncate">
               {post.author.username}
             </p>
-            <p className={`text-white/80 ${videoMode === 'fullscreen' ? 'text-sm' : 'text-xs'}`}>
+            <p className="text-white/80 text-xs">
               {post.author.englishLevel}
             </p>
           </div>
@@ -171,22 +203,18 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
         {/* Title */}
         <Link 
           to={`/post/${post._id}`}
-          className={`block text-white font-medium line-clamp-2 hover:text-blue-200 ${
-            videoMode === 'fullscreen' ? 'text-base mb-3' : 'text-sm mb-2'
-          }`}
+          className="block text-white font-medium text-sm mb-2 line-clamp-2 hover:text-blue-200"
         >
           {post.title}
         </Link>
 
         {/* Tags */}
         {post.tags.length > 0 && (
-          <div className={`flex flex-wrap gap-2 ${videoMode === 'fullscreen' ? 'mb-4' : 'mb-3'}`}>
-            {post.tags.slice(0, 3).map(tag => (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {post.tags.slice(0, 2).map(tag => (
               <span 
                 key={tag} 
-                className={`bg-white/25 text-white px-3 py-1 rounded-full backdrop-blur-sm ${
-                  videoMode === 'fullscreen' ? 'text-sm' : 'text-xs'
-                }`}
+                className="bg-white/25 text-white px-2 py-1 rounded-full text-xs backdrop-blur-sm"
               >
                 #{tag}
               </span>
@@ -195,40 +223,33 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
         )}
 
         {/* Category & Difficulty */}
-        <div className="flex items-center space-x-3">
-          <span className={`bg-blue-500/90 text-white px-3 py-1 rounded-full backdrop-blur-sm ${
-            videoMode === 'fullscreen' ? 'text-sm' : 'text-xs'
-          }`}>
+        <div className="flex items-center space-x-2">
+          <span className="bg-blue-500/90 text-white px-2 py-1 rounded-full text-xs backdrop-blur-sm">
             {post.category}
           </span>
-          <span className={`bg-green-500/90 text-white px-3 py-1 rounded-full backdrop-blur-sm ${
-            videoMode === 'fullscreen' ? 'text-sm' : 'text-xs'
-          }`}>
+          <span className="bg-green-500/90 text-white px-2 py-1 rounded-full text-xs backdrop-blur-sm">
             {post.difficulty}
           </span>
         </div>
       </div>
 
       {/* Right Side Actions */}
-      <div className={videoMode === 'fullscreen'
-        ? "absolute right-4 bottom-32 flex flex-col items-center space-y-6 z-40"
-        : "absolute right-3 bottom-20 flex flex-col items-center space-y-4"
-      }>
+      <div className="absolute right-2 bottom-20 flex flex-col items-center space-y-3 z-40">
         {/* Upvote */}
         <button
           onClick={() => handleVote('up')}
           disabled={isVoting}
-          className={`${videoMode === 'fullscreen' ? 'p-3' : 'p-2'} rounded-full ${
+          className={`p-2 rounded-full transition-colors ${
             userVote === 'up' 
               ? 'bg-green-500 text-white' 
               : 'bg-black/50 text-white hover:bg-green-500/80'
-          } transition-colors`}
+          }`}
         >
-          <ArrowUp size={videoMode === 'fullscreen' ? 24 : 20} />
+          <ArrowUp size={20} />
         </button>
         
         {/* Score */}
-        <span className={`text-white font-bold ${videoMode === 'fullscreen' ? 'text-sm' : 'text-xs'}`}>
+        <span className="text-white font-bold text-xs text-center">
           {score}
         </span>
         
@@ -236,29 +257,29 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
         <button
           onClick={() => handleVote('down')}
           disabled={isVoting}
-          className={`${videoMode === 'fullscreen' ? 'p-3' : 'p-2'} rounded-full ${
+          className={`p-2 rounded-full transition-colors ${
             userVote === 'down' 
               ? 'bg-red-500 text-white' 
               : 'bg-black/50 text-white hover:bg-red-500/80'
-          } transition-colors`}
+          }`}
         >
-          <ArrowDown size={videoMode === 'fullscreen' ? 24 : 20} />
+          <ArrowDown size={20} />
         </button>
 
         {/* Comments */}
         <Link
           to={`/post/${post._id}`}
-          className={`${videoMode === 'fullscreen' ? 'p-3' : 'p-2'} rounded-full bg-black/50 text-white hover:bg-gray-600/80 transition-colors`}
+          className="p-2 rounded-full bg-black/50 text-white hover:bg-gray-600/80 transition-colors"
         >
-          <MessageCircle size={videoMode === 'fullscreen' ? 24 : 20} />
+          <MessageCircle size={20} />
         </Link>
-        <span className={`text-white font-medium ${videoMode === 'fullscreen' ? 'text-xs' : 'text-xs'}`}>
+        <span className="text-white font-medium text-xs text-center">
           {post.commentCount}
         </span>
 
         {/* Share */}
-        <button className={`${videoMode === 'fullscreen' ? 'p-3' : 'p-2'} rounded-full bg-black/50 text-white hover:bg-gray-600/80 transition-colors`}>
-          <Share2 size={videoMode === 'fullscreen' ? 24 : 20} />
+        <button className="p-2 rounded-full bg-black/50 text-white hover:bg-gray-600/80 transition-colors">
+          <Share2 size={20} />
         </button>
       </div>
     </div>
@@ -290,17 +311,16 @@ const VideoFeed: React.FC<VideoFeedProps> = ({ posts, onVote, videoMode = 'compa
 
   return (
     <div className={videoMode === 'fullscreen' 
-      ? "fixed top-16 left-0 right-0 bottom-0 h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide bg-black"
-      : "flex flex-col items-center space-y-6 pb-20 pt-4"
+      ? "video-feed-container scrollbar-hide"
+      : "video-feed-container scrollbar-hide bg-gray-100"
     }>
       {videoPosts.map((post) => (
         <div 
           key={post._id} 
           className={videoMode === 'fullscreen'
-            ? "h-full w-full snap-start snap-always flex items-center justify-center video-container"
-            : "w-full flex justify-center"
+            ? "video-snap-item"
+            : "video-snap-item"
           }
-          style={videoMode === 'fullscreen' ? { scrollSnapAlign: 'start', scrollSnapStop: 'always' } : {}}
         >
           <VideoPost post={post} onVote={onVote} videoMode={videoMode} />
         </div>
