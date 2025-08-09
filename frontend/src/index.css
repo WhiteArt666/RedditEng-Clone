@@ -137,3 +137,41 @@ input:focus, textarea:focus, select:focus {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* Hide scrollbar for video feed */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth snap scrolling */
+.snap-y {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.snap-always {
+  scroll-snap-stop: always;
+}
+
+/* Optimize scrolling performance */
+.video-container {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Ensure proper spacing for fixed header */
+.video-feed-container {
+  padding-top: 4rem; /* Space for fixed header */
+}

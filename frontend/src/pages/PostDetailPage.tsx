@@ -27,6 +27,16 @@ const PostDetailPage: React.FC = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [score, setScore] = useState(0);
+  
+  // Edit post states
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Delete post states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: postData, isLoading: postLoading, error: postError, refetch: refetchPost } = useQuery({
     queryKey: ['post', id],
@@ -53,6 +63,14 @@ const PostDetailPage: React.FC = () => {
       setScore(post.score);
     }
   }, [post, user]);
+
+  // Initialize edit values when post loads
+  React.useEffect(() => {
+    if (post) {
+      setEditTitle(post.title);
+      setEditContent(post.content);
+    }
+  }, [post]);
 
   const handleVote = async (voteType: 'up' | 'down') => {
     if (!isAuthenticated || !post) {
@@ -116,6 +134,50 @@ const PostDetailPage: React.FC = () => {
       refetchComments();
     } catch (error) {
       console.error('Comment vote failed:', error);
+    }
+  };
+
+  const handleEditPost = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    // Reset to original values
+    if (post) {
+      setEditTitle(post.title);
+      setEditContent(post.content);
+    }
+  };
+
+  const handleUpdatePost = async () => {
+    if (!post || !editTitle.trim() || !editContent.trim()) return;
+
+    setIsUpdating(true);
+    try {
+      await postsAPI.updatePost(post._id, {
+        title: editTitle.trim(),
+        content: editContent.trim(),
+      });
+      setIsEditing(false);
+      refetchPost(); // Refresh post data
+    } catch (error) {
+      console.error('Update post failed:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!post) return;
+
+    setIsDeleting(true);
+    try {
+      await postsAPI.deletePost(post._id);
+      navigate('/'); // Redirect to home after deletion
+    } catch (error) {
+      console.error('Delete post failed:', error);
+      setIsDeleting(false);
     }
   };
 
@@ -200,10 +262,16 @@ const PostDetailPage: React.FC = () => {
             
             {isAuthor && (
               <div className="flex items-center space-x-2">
-                <button className="text-gray-400 hover:text-blue-600">
+                <button 
+                  onClick={handleEditPost}
+                  className="text-gray-400 hover:text-blue-600 transition-colors"
+                >
                   <Edit size={16} />
                 </button>
-                <button className="text-gray-400 hover:text-red-600">
+                <button 
+                  onClick={() => setShowDeleteModal(true)}
+                  className="text-gray-400 hover:text-red-600 transition-colors"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -212,8 +280,59 @@ const PostDetailPage: React.FC = () => {
 
           {/* Post Content */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">{post.title}</h1>
-            <MediaRenderer content={post.content} />
+            {isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Enter post title..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Content
+                  </label>
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    rows={8}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Write your content here..."
+                  />
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={handleUpdatePost}
+                    disabled={isUpdating || !editTitle.trim() || !editContent.trim()}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isUpdating ? (
+                      <div className="loading-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={isUpdating}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-gray-900 mb-4">{post.title}</h1>
+                <MediaRenderer content={post.content} />
+              </>
+            )}
             
             {/* Tags */}
             {post.tags.length > 0 && (
@@ -378,6 +497,40 @@ const PostDetailPage: React.FC = () => {
           </p>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Delete Post
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this post? This action cannot be undone.
+            </p>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleDeletePost}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isDeleting ? (
+                  <div className="loading-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                ) : (
+                  'Delete'
+                )}
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

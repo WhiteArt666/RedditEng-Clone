@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { postsAPI } from '../services/api';
 import { useCloudinaryUpload } from '../hooks/useCloudinaryUpload';
 import type { CloudinaryWidget } from '../services/cloudinaryService';
-import { Camera, X, Send, BookOpen, Hash, Mic, Headphones, PenTool, Eye, Award, GraduationCap, MessageSquare, Upload, Video, Music } from 'lucide-react';
+import { X, Send, BookOpen, Hash, Mic, Headphones, PenTool, Eye, Award, GraduationCap, MessageSquare, Upload, Video, Music } from 'lucide-react';
 
 const categories = [
   { name: 'Grammar', icon: BookOpen },
@@ -32,6 +33,7 @@ const difficulties = ['Easy', 'Medium', 'Hard'];
 const CreatePostPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -42,10 +44,6 @@ const CreatePostPage: React.FC = () => {
     tags: [] as string[],
   });
   const [tagInput, setTagInput] = useState('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [selectedAudio, setSelectedAudio] = useState<File | null>(null);
-  const [audioPreview, setAudioPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -81,48 +79,6 @@ const CreatePostPage: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setError('Image size must be less than 5MB');
-        return;
-      }
-      
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target?.result as string);
-      reader.readAsDataURL(file);
-      setError('');
-    }
-  };
-
-  const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        setError('Audio size must be less than 10MB');
-        return;
-      }
-      
-      setSelectedAudio(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setAudioPreview(e.target?.result as string);
-      reader.readAsDataURL(file);
-      setError('');
-    }
-  };
-
-  const removeImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-  };
-
-  const removeAudio = () => {
-    setSelectedAudio(null);
-    setAudioPreview(null);
   };
 
   // Cloudinary upload handlers
@@ -178,72 +134,12 @@ const CreatePostPage: React.FC = () => {
     try {
       console.log('=== Starting form submission ===');
       console.log('Form data:', formData);
-      console.log('Selected image:', selectedImage?.name);
-      console.log('Selected audio:', selectedAudio?.name);
       console.log('Cloudinary uploaded files:', uploadedFiles);
       console.log('API URL:', import.meta.env.VITE_API_URL);
-
-      let imageUrl = '';
-      let audioUrl = '';
-      
-      // Upload image if selected (traditional upload)
-      if (selectedImage) {
-        const formDataUpload = new FormData();
-        formDataUpload.append('image', selectedImage);
-        
-        const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL}/upload/image`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: formDataUpload,
-        });
-        
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          imageUrl = uploadData.url;
-        }
-      }
-
-      // Upload audio if selected (traditional upload)
-      if (selectedAudio) {
-        console.log('Uploading audio file:', selectedAudio.name);
-        const formDataUpload = new FormData();
-        formDataUpload.append('audio', selectedAudio);
-        
-        const uploadResponse = await fetch(`${import.meta.env.VITE_API_URL}/upload/audio`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: formDataUpload,
-        });
-        
-        console.log('Audio upload response status:', uploadResponse.status);
-        
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          console.log('Audio upload successful:', uploadData);
-          audioUrl = uploadData.url;
-        } else {
-          const errorData = await uploadResponse.text();
-          console.error('Audio upload failed:', errorData);
-        }
-      }
 
       // Create post with attachments
       let contentWithMedia = formData.content;
       console.log('Original content:', contentWithMedia);
-      
-      // Add traditional uploads
-      if (imageUrl) {
-        contentWithMedia += `\n\n![Image](${imageUrl})`;
-        console.log('Added image URL:', imageUrl);
-      }
-      if (audioUrl) {
-        contentWithMedia += `\n\n🎵 [Audio Recording](${audioUrl})`;
-        console.log('Added audio URL:', audioUrl);
-      }
 
       // Add Cloudinary uploads
       const cloudinaryImages = getUploadedImages();
@@ -256,7 +152,7 @@ const CreatePostPage: React.FC = () => {
       });
 
       cloudinaryAudios.forEach(file => {
-        contentWithMedia += `\n\n🎵 [Audio: ${file.originalFilename}](${file.secureUrl})`;
+        contentWithMedia += `\n\n [Audio: ${file.originalFilename}](${file.secureUrl})`;
         console.log('Added Cloudinary audio:', file.secureUrl);
       });
 
@@ -279,6 +175,10 @@ const CreatePostPage: React.FC = () => {
       });
 
       console.log('Post created successfully');
+      
+      // Invalidate posts cache to refetch data
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      
       navigate('/');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create post';
@@ -504,110 +404,6 @@ const CreatePostPage: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Traditional Upload Section (Fallback) */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Traditional Upload (Fallback)</h3>
-
-            {/* Image Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add Image (Optional)
-              </label>
-              
-              {!imagePreview ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <div className="text-center">
-                    <Camera className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="mt-4">
-                      <label htmlFor="image-upload" className="cursor-pointer">
-                        <span className="mt-2 block text-sm font-medium text-gray-900">
-                          Upload an image
-                        </span>
-                        <span className="mt-1 block text-sm text-gray-500">
-                          PNG, JPG, GIF up to 5MB
-                        </span>
-                        <input
-                          id="image-upload"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageSelect}
-                          className="sr-only"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-64 object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Audio Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add Audio (Optional)
-              </label>
-              
-              {!audioPreview ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <div className="text-center">
-                    <Mic className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="mt-4">
-                      <label htmlFor="audio-upload" className="cursor-pointer">
-                        <span className="mt-2 block text-sm font-medium text-gray-900">
-                          Upload an audio file
-                        </span>
-                        <span className="mt-1 block text-sm text-gray-500">
-                          MP3, WAV, M4A up to 10MB
-                        </span>
-                        <input
-                          id="audio-upload"
-                          type="file"
-                          accept="audio/*"
-                          onChange={handleAudioSelect}
-                          className="sr-only"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative border border-gray-300 rounded-lg p-4">
-                  <div className="flex items-center space-x-3">
-                    <Mic className="h-8 w-8 text-primary-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Audio file uploaded</p>
-                      <audio controls className="w-full mt-2">
-                        <source src={audioPreview} type="audio/mpeg" />
-                        Your browser does not support the audio element.
-                      </audio>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={removeAudio}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Tags */}
