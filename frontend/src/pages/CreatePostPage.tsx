@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { postsAPI } from '../services/api';
-import { Camera, X, Send, BookOpen, Hash, Mic, Headphones, PenTool, Eye, Award, GraduationCap, MessageSquare } from 'lucide-react';
+import { useCloudinaryUpload } from '../hooks/useCloudinaryUpload';
+import type { CloudinaryWidget } from '../services/cloudinaryService';
+import { Camera, X, Send, BookOpen, Hash, Mic, Headphones, PenTool, Eye, Award, GraduationCap, MessageSquare, Upload, Video, Music } from 'lucide-react';
 
 const categories = [
   { name: 'Grammar', icon: BookOpen },
@@ -28,6 +30,9 @@ const types = [
 const difficulties = ['Easy', 'Medium', 'Hard'];
 
 const CreatePostPage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -44,8 +49,29 @@ const CreatePostPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  // Cloudinary upload hook
+  const {
+    uploadedFiles,
+    isWidgetReady,
+    createImageWidget,
+    createAudioWidget,
+    createVideoWidget,
+    removeFile
+  } = useCloudinaryUpload();
+
+  // Widget references
+  const imageWidgetRef = useRef<CloudinaryWidget | null>(null);
+  const audioWidgetRef = useRef<CloudinaryWidget | null>(null);
+  const videoWidgetRef = useRef<CloudinaryWidget | null>(null);
+
+  // Initialize widgets when ready
+  useEffect(() => {
+    if (isWidgetReady) {
+      imageWidgetRef.current = createImageWidget();
+      audioWidgetRef.current = createAudioWidget();
+      videoWidgetRef.current = createVideoWidget();
+    }
+  }, [isWidgetReady, createImageWidget, createAudioWidget, createVideoWidget]);
 
   if (!isAuthenticated) {
     navigate('/login');
@@ -99,6 +125,33 @@ const CreatePostPage: React.FC = () => {
     setAudioPreview(null);
   };
 
+  // Cloudinary upload handlers
+  const openImageWidget = () => {
+    if (imageWidgetRef.current) {
+      imageWidgetRef.current.open();
+    }
+  };
+
+  const openAudioWidget = () => {
+    if (audioWidgetRef.current) {
+      audioWidgetRef.current.open();
+    }
+  };
+
+  const openVideoWidget = () => {
+    if (videoWidgetRef.current) {
+      videoWidgetRef.current.open();
+    }
+  };
+
+  const removeCloudinaryFile = (publicId: string) => {
+    removeFile(publicId);
+  };
+
+  const getUploadedImages = () => uploadedFiles.filter(file => file.resourceType === 'image');
+  const getUploadedAudios = () => uploadedFiles.filter(file => file.resourceType === 'audio' || file.resourceType === 'video');
+  const getUploadedVideos = () => uploadedFiles.filter(file => file.resourceType === 'video');
+
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase();
     if (tag && !formData.tags.includes(tag)) {
@@ -123,10 +176,17 @@ const CreatePostPage: React.FC = () => {
     setIsLoading(true);
 
     try {
+      console.log('=== Starting form submission ===');
+      console.log('Form data:', formData);
+      console.log('Selected image:', selectedImage?.name);
+      console.log('Selected audio:', selectedAudio?.name);
+      console.log('Cloudinary uploaded files:', uploadedFiles);
+      console.log('API URL:', import.meta.env.VITE_API_URL);
+
       let imageUrl = '';
       let audioUrl = '';
       
-      // Upload image if selected
+      // Upload image if selected (traditional upload)
       if (selectedImage) {
         const formDataUpload = new FormData();
         formDataUpload.append('image', selectedImage);
@@ -145,8 +205,9 @@ const CreatePostPage: React.FC = () => {
         }
       }
 
-      // Upload audio if selected
+      // Upload audio if selected (traditional upload)
       if (selectedAudio) {
+        console.log('Uploading audio file:', selectedAudio.name);
         const formDataUpload = new FormData();
         formDataUpload.append('audio', selectedAudio);
         
@@ -158,27 +219,71 @@ const CreatePostPage: React.FC = () => {
           body: formDataUpload,
         });
         
+        console.log('Audio upload response status:', uploadResponse.status);
+        
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
+          console.log('Audio upload successful:', uploadData);
           audioUrl = uploadData.url;
+        } else {
+          const errorData = await uploadResponse.text();
+          console.error('Audio upload failed:', errorData);
         }
       }
 
       // Create post with attachments
       let contentWithMedia = formData.content;
+      console.log('Original content:', contentWithMedia);
+      
+      // Add traditional uploads
       if (imageUrl) {
         contentWithMedia += `\n\n![Image](${imageUrl})`;
+        console.log('Added image URL:', imageUrl);
       }
       if (audioUrl) {
         contentWithMedia += `\n\n🎵 [Audio Recording](${audioUrl})`;
+        console.log('Added audio URL:', audioUrl);
       }
 
+      // Add Cloudinary uploads
+      const cloudinaryImages = getUploadedImages();
+      const cloudinaryAudios = getUploadedAudios();
+      const cloudinaryVideos = getUploadedVideos();
+
+      cloudinaryImages.forEach(file => {
+        contentWithMedia += `\n\n![${file.originalFilename}](${file.secureUrl})`;
+        console.log('Added Cloudinary image:', file.secureUrl);
+      });
+
+      cloudinaryAudios.forEach(file => {
+        if (file.resourceType === 'video' && file.format === 'mp4') {
+          contentWithMedia += `\n\n🎥 [Video: ${file.originalFilename}](${file.secureUrl})`;
+          console.log('Added Cloudinary video as audio:', file.secureUrl);
+        } else {
+          contentWithMedia += `\n\n🎵 [Audio: ${file.originalFilename}](${file.secureUrl})`;
+          console.log('Added Cloudinary audio:', file.secureUrl);
+        }
+      });
+
+      cloudinaryVideos.forEach(file => {
+        contentWithMedia += `\n\n🎥 [Video: ${file.originalFilename}](${file.secureUrl})`;
+        console.log('Added Cloudinary video:', file.secureUrl);
+      });
+      
+      console.log('Final content with media:', contentWithMedia);
+
       // Create post
+      console.log('Creating post with data:', {
+        ...formData,
+        content: contentWithMedia,
+      });
+      
       await postsAPI.createPost({
         ...formData,
         content: contentWithMedia,
       });
 
+      console.log('Post created successfully');
       navigate('/');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create post';
@@ -289,103 +394,225 @@ const CreatePostPage: React.FC = () => {
             />
           </div>
 
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Add Image (Optional)
-            </label>
+          {/* Media Upload Section */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium text-gray-900">Add Media</h3>
             
-            {!imagePreview ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                <div className="text-center">
-                  <Camera className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="mt-4">
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      <span className="mt-2 block text-sm font-medium text-gray-900">
-                        Upload an image
-                      </span>
-                      <span className="mt-1 block text-sm text-gray-500">
-                        PNG, JPG, GIF up to 5MB
-                      </span>
-                      <input
-                        id="image-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        className="sr-only"
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="relative">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-64 object-cover rounded-lg"
-                />
+            {/* Cloudinary Upload Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Image Upload Widget */}
+              <div>
                 <button
                   type="button"
-                  onClick={removeImage}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  onClick={openImageWidget}
+                  disabled={!isWidgetReady}
+                  className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <X size={16} />
+                  <div className="text-center">
+                    <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <span className="text-sm font-medium text-gray-900">Upload Images</span>
+                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, GIF up to 5MB</p>
+                  </div>
                 </button>
+              </div>
+
+              {/* Audio Upload Widget */}
+              <div>
+                <button
+                  type="button"
+                  onClick={openAudioWidget}
+                  disabled={!isWidgetReady}
+                  className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <div className="text-center">
+                    <Music className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <span className="text-sm font-medium text-gray-900">Upload Audio</span>
+                    <p className="text-xs text-gray-500 mt-1">MP3, WAV, M4A up to 10MB</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Video Upload Widget */}
+              <div>
+                <button
+                  type="button"
+                  onClick={openVideoWidget}
+                  disabled={!isWidgetReady}
+                  className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <div className="text-center">
+                    <Video className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <span className="text-sm font-medium text-gray-900">Upload Videos</span>
+                    <p className="text-xs text-gray-500 mt-1">MP4, MOV, AVI up to 50MB</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Display Uploaded Files */}
+            {uploadedFiles.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="text-md font-medium text-gray-900">Uploaded Files ({uploadedFiles.length})</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {uploadedFiles.map((file) => (
+                    <div key={file.publicId} className="relative border border-gray-300 rounded-lg p-4">
+                      {file.resourceType === 'image' && (
+                        <div>
+                          <img
+                            src={file.secureUrl}
+                            alt={file.originalFilename}
+                            className="w-full h-32 object-cover rounded-md mb-2"
+                          />
+                          <p className="text-sm font-medium text-gray-900 truncate">{file.originalFilename}</p>
+                          <p className="text-xs text-gray-500">{(file.bytes / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                      )}
+                      
+                      {(file.resourceType === 'video' || file.resourceType === 'audio') && (
+                        <div>
+                          {file.resourceType === 'video' ? (
+                            <video
+                              src={file.secureUrl}
+                              controls
+                              className="w-full h-32 rounded-md mb-2"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-32 bg-gray-100 rounded-md mb-2">
+                              <Music className="h-12 w-12 text-gray-400" />
+                            </div>
+                          )}
+                          
+                          {file.resourceType === 'audio' && (
+                            <audio controls className="w-full mb-2">
+                              <source src={file.secureUrl} type={`audio/${file.format}`} />
+                              Your browser does not support the audio element.
+                            </audio>
+                          )}
+                          
+                          <p className="text-sm font-medium text-gray-900 truncate">{file.originalFilename}</p>
+                          <p className="text-xs text-gray-500">
+                            {(file.bytes / 1024 / 1024).toFixed(2)} MB
+                            {file.duration && ` • ${Math.round(file.duration)}s`}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <button
+                        type="button"
+                        onClick={() => removeCloudinaryFile(file.publicId)}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Audio Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Add Audio (Optional)
-            </label>
-            
-            {!audioPreview ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                <div className="text-center">
-                  <Mic className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="mt-4">
-                    <label htmlFor="audio-upload" className="cursor-pointer">
-                      <span className="mt-2 block text-sm font-medium text-gray-900">
-                        Upload an audio file
-                      </span>
-                      <span className="mt-1 block text-sm text-gray-500">
-                        MP3, WAV, M4A up to 10MB
-                      </span>
-                      <input
-                        id="audio-upload"
-                        type="file"
-                        accept="audio/*"
-                        onChange={handleAudioSelect}
-                        className="sr-only"
-                      />
-                    </label>
+          {/* Traditional Upload Section (Fallback) */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium text-gray-900">Traditional Upload (Fallback)</h3>
+
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Add Image (Optional)
+              </label>
+              
+              {!imagePreview ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="text-center">
+                    <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="mt-4">
+                      <label htmlFor="image-upload" className="cursor-pointer">
+                        <span className="mt-2 block text-sm font-medium text-gray-900">
+                          Upload an image
+                        </span>
+                        <span className="mt-1 block text-sm text-gray-500">
+                          PNG, JPG, GIF up to 5MB
+                        </span>
+                        <input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="relative border border-gray-300 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <Mic className="h-8 w-8 text-primary-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Audio file uploaded</p>
-                    <audio controls className="w-full mt-2">
-                      <source src={audioPreview} type="audio/mpeg" />
-                      Your browser does not support the audio element.
-                    </audio>
+              ) : (
+                <div className="relative">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Audio Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Add Audio (Optional)
+              </label>
+              
+              {!audioPreview ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="text-center">
+                    <Mic className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="mt-4">
+                      <label htmlFor="audio-upload" className="cursor-pointer">
+                        <span className="mt-2 block text-sm font-medium text-gray-900">
+                          Upload an audio file
+                        </span>
+                        <span className="mt-1 block text-sm text-gray-500">
+                          MP3, WAV, M4A up to 10MB
+                        </span>
+                        <input
+                          id="audio-upload"
+                          type="file"
+                          accept="audio/*"
+                          onChange={handleAudioSelect}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={removeAudio}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            )}
+              ) : (
+                <div className="relative border border-gray-300 rounded-lg p-4">
+                  <div className="flex items-center space-x-3">
+                    <Mic className="h-8 w-8 text-primary-600" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Audio file uploaded</p>
+                      <audio controls className="w-full mt-2">
+                        <source src={audioPreview} type="audio/mpeg" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeAudio}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Tags */}

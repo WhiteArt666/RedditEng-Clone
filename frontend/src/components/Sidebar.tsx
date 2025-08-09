@@ -9,7 +9,8 @@ import {
   Eye, 
   Award, 
   GraduationCap,
-  Hash
+  Hash,
+  PlayCircle
 } from 'lucide-react';
 
 const categories = [
@@ -22,6 +23,7 @@ const categories = [
   { name: 'IELTS', icon: Award, path: '/category/ielts' },
   { name: 'TOEFL', icon: GraduationCap, path: '/category/toefl' },
   { name: 'General', icon: MessageSquare, path: '/category/general' },
+  { name: 'ShortVideo', icon: PlayCircle, path: '/category/ShortVideo' },
 ];
 
 const difficulties = [

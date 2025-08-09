@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { postsAPI, commentsAPI } from '../services/api';
 import MediaRenderer from '../components/MediaRenderer';
+import MediaPlayer from '../components/MediaPlayer';
 import type { Comment } from '../types';
 
 const PostDetailPage: React.FC = () => {
@@ -214,6 +215,7 @@ const PostDetailPage: React.FC = () => {
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">{post.title}</h1>
             <MediaRenderer content={post.content} />
+            <MediaPlayer content={post.content} />
             
             {/* Tags */}
             {post.tags.length > 0 && (

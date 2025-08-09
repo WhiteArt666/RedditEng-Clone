@@ -3,8 +3,19 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { uploadImage, uploadAudio } from '../middleware/upload';
 import { asyncHandler } from '../middleware/errorHandler';
 import cloudinary from '../config/cloudinary';
+import { config } from '../config/config';
 
 const router = express.Router();
+
+// @route   GET /api/upload/config
+// @desc    Get Cloudinary configuration for frontend
+// @access  Private
+router.get('/config', authenticateToken, asyncHandler(async (req: AuthRequest, res: Response) => {
+  res.json({
+    cloudName: config.cloudinaryCloudName,
+    uploadPreset: 'ml_default' // Using the default unsigned preset
+  });
+}));
 
 // @route   POST /api/upload/image
 // @desc    Upload image to Cloudinary

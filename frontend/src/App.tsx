@@ -10,6 +10,7 @@ import HomePage from './pages/HomePage';
 import PostDetailPage from './pages/PostDetailPage';
 import CreatePostPage from './pages/CreatePostPage';
 import ProfilePage from './pages/ProfilePage';
+import CloudinaryUploadDemo from './components/CloudinaryUploadDemo';
 
 // Pages (will create these next)
 
@@ -50,6 +51,9 @@ function App() {
                         <Route path="/category/:category" element={<HomePage />} />
                         <Route path="/difficulty/:difficulty" element={<HomePage />} />
                         <Route path="/search" element={<HomePage />} />
+                        
+                        {/* Test Cloudinary Upload */}
+                        <Route path="/test-upload" element={<CloudinaryUploadDemo />} />
                         
                         {/* Protected routes */}
                         <Route path="/create" element={

@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
     message: 'English Learning Reddit API', 
     version: '1.0.0',
     endpoints: {
-      health: '/api/health',
+      upload: '/api/upload',
       auth: '/api/auth',
       posts: '/api/posts',
       comments: '/api/comments'
