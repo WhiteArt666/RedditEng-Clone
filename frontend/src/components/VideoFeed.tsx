@@ -126,7 +126,11 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
       }`}
       style={videoMode === 'fullscreen' 
         ? { height: '100vh', maxHeight: '100vh' }
-        : { height: '80vh', maxHeight: '80vh', aspectRatio: '9/16' }
+        : { 
+            height: '80vh', 
+            maxHeight: '80vh', 
+            aspectRatio: '9/16'
+          }
       }
     >
       {/* Video */}
@@ -356,7 +360,7 @@ const VideoFeed: React.FC<VideoFeedProps> = ({ posts, onVote, videoMode = 'compa
             : "video-snap-item compact"
           }
         >
-          <div className={videoMode === 'compact' ? "video-center-wrapper video-flex-center" : ""}>
+          <div className={videoMode === 'compact' ? "video-center-wrapper" : ""}>
             <VideoPost post={post} onVote={onVote} videoMode={videoMode} />
           </div>
         </div>

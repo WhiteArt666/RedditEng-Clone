@@ -377,3 +377,44 @@ input:focus, textarea:focus, select:focus {
 .video-feed-container {
   padding-top: 4rem; /* Space for fixed header */
 }
+
+/* Perfect centering for compact video view */
+.video-feed-compact-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Compact video item centering */
+.video-snap-item.compact {
+  background: linear-gradient(135deg, #0f1419 0%, #1a1a1a 50%, #0f1419 100%) !important;
+  padding: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  position: relative !important;
+}
+
+/* Video wrapper for perfect centering */
+.video-center-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  position: relative !important;
+}
+
+/* Ensure video stays centered */
+.video-compact-centered {
+  margin: 0 auto !important;
+  position: relative !important;
+  display: block !important;
+  transform: none !important;
+}

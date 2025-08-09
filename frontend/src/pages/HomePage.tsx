@@ -5,6 +5,7 @@ import { Filter, Video, Grid3X3, Maximize, Minimize } from 'lucide-react';
 import PostCard from '../components/PostCard';
 import VideoFeed from '../components/VideoFeed';
 import { postsAPI } from '../services/api';
+import { useViewMode } from '../hooks/useViewMode';
 import type { Post } from '../types';
 
 interface HomePageProps {
@@ -16,6 +17,9 @@ const HomePage: React.FC<HomePageProps> = ({ sortBy = 'hot' }) => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q');
   
+  // Use the custom hook for view mode management
+  const { viewMode, setViewMode, videoMode, setVideoMode } = useViewMode();
+  
   // Capitalize category and difficulty from URL params to match backend
   const capitalizeFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
   
@@ -23,8 +27,6 @@ const HomePage: React.FC<HomePageProps> = ({ sortBy = 'hot' }) => {
   const [selectedCategory, setSelectedCategory] = useState(category ? capitalizeFirst(category) : '');
   const [selectedDifficulty, setSelectedDifficulty] = useState(difficulty ? capitalizeFirst(difficulty) : '');
   const [selectedSort, setSelectedSort] = useState(sortBy);
-  const [viewMode, setViewMode] = useState<'grid' | 'video'>('video');
-  const [videoMode, setVideoMode] = useState<'compact' | 'fullscreen'>('compact');
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['posts', currentPage, selectedCategory, selectedDifficulty, selectedSort, searchQuery, viewMode, videoMode],
