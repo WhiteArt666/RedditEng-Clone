@@ -21,17 +21,16 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
   const { isAuthenticated, user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(
-    post.upvotes.includes(user?.id || '') ? 'up' : 
+    post.upvotes.includes(user?.id || '') ? 'up' :
     post.downvotes.includes(user?.id || '') ? 'down' : null
   );
   const [score, setScore] = useState(post.score);
   const [isVoting, setIsVoting] = useState(false);
   const [isMuted, setIsMuted] = useState(false); // Start unmuted for both modes
-
-  // Auto-play when video comes into view (only in fullscreen mode)
+  const [isPlaying, setIsPlaying] = useState(false);  // Auto-play when video comes into view (for both modes)
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || videoMode !== 'fullscreen') return;
+    if (!video) return;
 
     // Set initial state
     video.muted = isMuted;
@@ -42,9 +41,11 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
           if (entry.isIntersecting) {
             // Auto play when in view
             video.play().catch(console.error);
+            setIsPlaying(true);
           } else {
             // Pause when out of view
             video.pause();
+            setIsPlaying(false);
           }
         });
       },
@@ -103,17 +104,13 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
     e.stopPropagation();
     const video = videoRef.current;
     if (video) {
-      if (videoMode === 'fullscreen') {
-        // In fullscreen mode, only toggle mute
-        setIsMuted(!isMuted);
-        video.muted = !isMuted;
+      // For both modes, toggle play/pause when clicking video
+      if (video.paused) {
+        video.play();
+        setIsPlaying(true);
       } else {
-        // In compact mode, toggle play/pause
-        if (video.paused) {
-          video.play();
-        } else {
-          video.pause();
-        }
+        video.pause();
+        setIsPlaying(false);
       }
     }
   };
@@ -125,11 +122,11 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
       className={`relative bg-black overflow-hidden ${
         videoMode === 'fullscreen' 
           ? 'w-full h-full' 
-          : 'w-full h-full'
+          : 'w-full max-w-sm mx-auto rounded-xl shadow-2xl video-compact-centered'
       }`}
       style={videoMode === 'fullscreen' 
         ? { height: '100vh', maxHeight: '100vh' }
-        : { height: '100vh', maxHeight: '100vh' }
+        : { height: '80vh', maxHeight: '80vh', aspectRatio: '9/16' }
       }
     >
       {/* Video */}
@@ -141,13 +138,24 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
           muted={isMuted}
           playsInline
           autoPlay
-          controls={videoMode === 'compact'}
+          controls={false} // Hide native controls for both modes
           preload="metadata"
           onClick={togglePlay}
           src={videoUrl || ''}
         >
           Your browser does not support the video element.
         </video>
+
+        {/* Play/Pause indicator */}
+        {!isPlaying && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+            <div className="bg-white bg-opacity-90 rounded-full p-4">
+              <svg className="w-12 h-12 text-black" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        )}
 
         {/* Mute button for both modes - positioned on the right */}
         <button
@@ -293,6 +301,32 @@ const VideoFeed: React.FC<VideoFeedProps> = ({ posts, onVote, videoMode = 'compa
     /\[Video:.*?\]\(.*?\)/i.test(post.content) // Contains video markdown format
   );
 
+  // Add resize handler to ensure videos stay centered in compact mode
+  useEffect(() => {
+    if (videoMode === 'compact') {
+      const handleResize = () => {
+        // Force reflow to ensure proper centering
+        const compactVideos = document.querySelectorAll('.video-snap-item.compact');
+        compactVideos.forEach(video => {
+          const wrapper = video.querySelector('.video-center-wrapper') as HTMLElement;
+          if (wrapper) {
+            wrapper.style.display = 'none';
+            void wrapper.offsetHeight; // Force reflow
+            wrapper.style.display = 'flex';
+          }
+        });
+      };
+
+      window.addEventListener('resize', handleResize);
+      // Initial centering
+      setTimeout(handleResize, 100);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [videoMode, videoPosts.length]);
+
   // Debug: Log all posts and video posts
   console.log('All posts:', posts.length);
   console.log('Video posts:', videoPosts.length);
@@ -312,17 +346,19 @@ const VideoFeed: React.FC<VideoFeedProps> = ({ posts, onVote, videoMode = 'compa
   return (
     <div className={videoMode === 'fullscreen' 
       ? "video-feed-container scrollbar-hide"
-      : "video-feed-container scrollbar-hide bg-gray-100"
+      : "video-feed-container scrollbar-hide compact-feed"
     }>
       {videoPosts.map((post) => (
         <div 
           key={post._id} 
           className={videoMode === 'fullscreen'
             ? "video-snap-item"
-            : "video-snap-item"
+            : "video-snap-item compact"
           }
         >
-          <VideoPost post={post} onVote={onVote} videoMode={videoMode} />
+          <div className={videoMode === 'compact' ? "video-center-wrapper video-flex-center" : ""}>
+            <VideoPost post={post} onVote={onVote} videoMode={videoMode} />
+          </div>
         </div>
       ))}
     </div>

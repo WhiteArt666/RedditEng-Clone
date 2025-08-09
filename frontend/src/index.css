@@ -179,6 +179,27 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 10px 0;
+}
+
+/* Compact mode specific styling */
+.video-snap-item.compact {
+  background: linear-gradient(135deg, #000000 0%, #000000 50%, #000000 100%);
+  padding: 20px;
+}
+
+/* Improve scrollbar for video feed */
+.video-feed-container::-webkit-scrollbar {
+  width: 2px;
+}
+
+.video-feed-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.video-feed-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
 }
 
 /* Video Feed Container - Both modes use snap scrolling */
@@ -189,6 +210,7 @@ input:focus, textarea:focus, select:focus {
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  position: relative;
 }
 
 /* Video Snap Item - Each video takes full viewport */
@@ -202,6 +224,113 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Compact mode - ensure centering */
+.video-snap-item.compact {
+  background: linear-gradient(135deg, #0f1419 0%, #1a1a1a 50%, #0f1419 100%);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Center compact videos both horizontally and vertically */
+.video-snap-item.compact > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 80vh;
+}
+
+/* Additional centering for compact video containers */
+.video-compact-centered {
+  margin: 0 auto !important;
+  transform: translateX(0) !important;
+  left: 50% !important;
+  right: 50% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Ensure parent container centers the video */
+.video-snap-item.compact {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+
+/* Override any potential margin issues */
+.video-snap-item.compact .video-compact-centered {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+}
+
+/* Video center wrapper for compact mode */
+.video-center-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Compact feed container */
+.compact-feed {
+  background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+}
+
+/* Responsive adjustments for compact mode */
+@media (max-width: 768px) {
+  .video-snap-item.compact {
+    padding: 10px !important;
+  }
+  
+  .video-compact-centered {
+    max-width: 100% !important;
+  }
+}
+
+/* Ensure smooth scrolling and perfect centering */
+.video-feed-container.compact-feed .video-snap-item.compact {
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+}
+
+/* Perfect centering utility for compact videos */
+.video-perfect-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+  max-width: 90vw;
+  max-height: 80vh;
+}
+
+/* Fallback centering with flexbox */
+.video-flex-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+}
+
+/* Prevent video overflow in compact mode */
+.video-snap-item.compact .video-compact-centered {
+  max-width: min(400px, 90vw) !important;
+  max-height: min(600px, 80vh) !important;
 }
 
 /* Video container optimization */
