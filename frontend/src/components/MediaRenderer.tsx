@@ -3,9 +3,10 @@ import { Volume2, Video } from 'lucide-react';
 
 interface MediaRendererProps {
   content: string;
+  compact?: boolean; // Add compact mode for smaller video rendering
 }
 
-const MediaRenderer: React.FC<MediaRendererProps> = ({ content }) => {
+const MediaRenderer: React.FC<MediaRendererProps> = ({ content, compact = false }) => {
   console.log('MediaRenderer received content:', content);
   
   // Split content by lines to process each line
@@ -27,11 +28,14 @@ const MediaRenderer: React.FC<MediaRendererProps> = ({ content }) => {
       processedUrls.add(url);
       console.log('Found image:', { alt, url });
       return (
-        <div key={index} className="my-4">
+        <div key={index} className={`my-4 ${compact ? 'max-w-2xl mx-auto' : ''}`}>
           <img
             src={url}
             alt={alt || 'Image'}
-            className="max-w-full h-auto rounded-lg shadow-md"
+            className={`max-w-full h-auto rounded-lg shadow-md ${
+              compact ? 'w-full object-cover' : 'max-w-full'
+            }`}
+            style={compact ? { maxHeight: '400px' } : {}}
             loading="lazy"
           />
         </div>
@@ -52,23 +56,28 @@ const MediaRenderer: React.FC<MediaRendererProps> = ({ content }) => {
       processedUrls.add(url);
       console.log('Found video:', { text, url });
       return (
-        <div key={index} className="my-4 bg-gray-50 rounded-lg p-4 border">
+        <div key={index} className={`my-4 bg-gray-50 rounded-lg p-4 border ${compact ? 'max-w-2xl mx-auto' : ''}`}>
           <div className="flex items-center space-x-3 mb-3">
             <Video className="h-5 w-5 text-primary-600" />
             <span className="text-sm font-medium text-gray-900">
               {text || 'Video'}
             </span>
           </div>
-          <video
-            controls
-            className="w-full max-w-2xl rounded-lg"
-            preload="metadata"
-          >
-            <source src={url} type="video/mp4" />
-            <source src={url} type="video/webm" />
-            <source src={url} type="video/ogg" />
-            Your browser does not support the video element.
-          </video>
+          <div className={`${compact ? 'w-full' : 'max-w-2xl'} relative`}>
+            <video
+              controls
+              className={`w-full rounded-lg shadow-sm ${
+                compact ? 'max-h-80 object-cover' : ''
+              }`}
+              preload="metadata"
+              style={compact ? { aspectRatio: '16/9', maxHeight: '320px' } : {}}
+            >
+              <source src={url} type="video/mp4" />
+              <source src={url} type="video/webm" />
+              <source src={url} type="video/ogg" />
+              Your browser does not support the video element.
+            </video>
+          </div>
         </div>
       );
     }

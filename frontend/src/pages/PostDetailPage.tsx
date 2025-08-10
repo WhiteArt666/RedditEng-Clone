@@ -369,7 +369,7 @@ const PostDetailPage: React.FC = () => {
             ) : (
               <>
                 <h1 className="text-2xl font-bold text-gray-900 mb-4">{post.title}</h1>
-                <MediaRenderer content={post.content} />
+                <MediaRenderer content={post.content} compact={true} />
               </>
             )}
             
