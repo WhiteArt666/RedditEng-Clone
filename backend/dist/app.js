@@ -16,9 +16,20 @@ const database_1 = require("./config/database");
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, helmet_1.default)());
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://reddit-eng-clone.vercel.app',
+    'https://reddit-eng-clone-git-main-duys-projects-38bc9861.vercel.app',
+    process.env.FRONTEND_URL
+].filter((origin) => Boolean(origin));
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    credentials: true
+    origin: [
+        ...allowedOrigins,
+        /^https:\/\/reddit-eng-clone.*\.vercel\.app$/
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
