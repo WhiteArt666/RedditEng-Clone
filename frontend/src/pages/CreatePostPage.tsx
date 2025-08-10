@@ -152,7 +152,7 @@ const CreatePostPage: React.FC = () => {
       });
 
       cloudinaryAudios.forEach(file => {
-        contentWithMedia += `\n\n [Audio: ${file.originalFilename}](${file.secureUrl})`;
+        contentWithMedia += `\n\n🎵 [Audio: ${file.originalFilename}](${file.secureUrl})`;
         console.log('Added Cloudinary audio:', file.secureUrl);
       });
 

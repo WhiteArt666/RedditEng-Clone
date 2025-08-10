@@ -176,6 +176,21 @@ const PostDetailPage: React.FC = () => {
     setDeletingCommentId(null);
   };
 
+  const handleReplyToComment = async (parentId: string, content: string) => {
+    try {
+      await commentsAPI.createComment({
+        content,
+        postId: id!,
+        parentId
+      });
+      refetchComments();
+      refetchPost(); // Update comment count
+    } catch (error) {
+      console.error('Reply submission failed:', error);
+      throw error;
+    }
+  };
+
   const handleEditPost = () => {
     setIsEditing(true);
   };
@@ -493,7 +508,9 @@ const PostDetailPage: React.FC = () => {
                 onVote={handleCommentVote}
                 onEdit={handleUpdateComment}
                 onDelete={handleDeleteComment}
+                onReply={handleReplyToComment}
                 formatDate={formatDate}
+                isAuthenticated={isAuthenticated}
               />
             ))}
           </div>

@@ -43,13 +43,29 @@ export const useCloudinaryUpload = () => {
   }, []);
 
   const handleUploadSuccess = useCallback((result: CloudinaryUploadResult) => {
+    // Determine the actual file type based on format and original filename
+    let actualResourceType = result.info.resource_type;
+    
+    // For Cloudinary, audio files are returned as 'video' resource type
+    // So we need to check the format to determine if it's actually audio
+    const audioFormats = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
+    const videoFormats = ['mp4', 'mov', 'avi', 'wmv', 'flv', 'webm', 'mkv'];
+    
+    if (result.info.resource_type === 'video') {
+      if (audioFormats.includes(result.info.format.toLowerCase())) {
+        actualResourceType = 'audio';
+      } else if (videoFormats.includes(result.info.format.toLowerCase())) {
+        actualResourceType = 'video';
+      }
+    }
+
     const uploadedFile: UploadedFile = {
       url: result.info.url,
       secureUrl: result.info.secure_url,
       publicId: result.info.public_id,
       originalFilename: result.info.original_filename,
       format: result.info.format,
-      resourceType: result.info.resource_type,
+      resourceType: actualResourceType, // Use the corrected resource type
       bytes: result.info.bytes,
       width: result.info.width,
       height: result.info.height,
