@@ -122,14 +122,16 @@ const VideoPost: React.FC<{ post: Post; onVote?: () => void; videoMode?: 'compac
       className={`relative bg-black overflow-hidden ${
         videoMode === 'fullscreen' 
           ? 'w-full h-full' 
-          : 'w-full max-w-sm mx-auto rounded-xl shadow-2xl video-compact-centered'
+          : 'w-full max-w-sm mx-auto rounded-xl shadow-2xl'
       }`}
       style={videoMode === 'fullscreen' 
         ? { height: '100vh', maxHeight: '100vh' }
         : { 
             height: '80vh', 
             maxHeight: '80vh', 
-            aspectRatio: '9/16'
+            aspectRatio: '9/16',
+            maxWidth: '400px',
+            width: '90vw'
           }
       }
     >

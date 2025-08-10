@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { postsAPI, commentsAPI } from '../services/api';
 import MediaRenderer from '../components/MediaRenderer';
+import CommentItem from '../components/CommentItem';
 import type { Comment } from '../types';
 
 const PostDetailPage: React.FC = () => {
@@ -37,6 +38,10 @@ const PostDetailPage: React.FC = () => {
   // Delete post states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Comment delete states
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const [showDeleteCommentModal, setShowDeleteCommentModal] = useState(false);
 
   const { data: postData, isLoading: postLoading, error: postError, refetch: refetchPost } = useQuery({
     queryKey: ['post', id],
@@ -135,6 +140,40 @@ const PostDetailPage: React.FC = () => {
     } catch (error) {
       console.error('Comment vote failed:', error);
     }
+  };
+
+  const handleUpdateComment = async (commentId: string, content: string) => {
+    try {
+      await commentsAPI.updateComment(commentId, { content });
+      refetchComments();
+    } catch (error) {
+      console.error('Comment update failed:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    setDeletingCommentId(commentId);
+    setShowDeleteCommentModal(true);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!deletingCommentId) return;
+
+    try {
+      await commentsAPI.deleteComment(deletingCommentId);
+      setShowDeleteCommentModal(false);
+      setDeletingCommentId(null);
+      refetchComments();
+      refetchPost(); // Update comment count
+    } catch (error) {
+      console.error('Comment deletion failed:', error);
+    }
+  };
+
+  const cancelDeleteComment = () => {
+    setShowDeleteCommentModal(false);
+    setDeletingCommentId(null);
   };
 
   const handleEditPost = () => {
@@ -447,48 +486,15 @@ const PostDetailPage: React.FC = () => {
         ) : comments.length > 0 ? (
           <div className="space-y-6">
             {comments.map((comment: Comment) => (
-              <div key={comment._id} className="border-l-2 border-gray-200 pl-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                      {comment.author.avatar ? (
-                        <img 
-                          src={comment.author.avatar} 
-                          alt={comment.author.username}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <User size={16} className="text-primary-600" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900 text-sm">{comment.author.username}</span>
-                        <span className="text-xs text-gray-500">•</span>
-                        <span className="text-xs text-gray-500">{formatDate(comment.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <p className="text-gray-700 mb-3 whitespace-pre-wrap">{comment.content}</p>
-                
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => handleCommentVote(comment._id, 'up')}
-                    className="vote-btn p-1 rounded text-gray-400 hover:text-green-600"
-                  >
-                    <ArrowUp size={16} />
-                  </button>
-                  <span className="text-sm text-gray-600">{comment.score}</span>
-                  <button
-                    onClick={() => handleCommentVote(comment._id, 'down')}
-                    className="vote-btn p-1 rounded text-gray-400 hover:text-red-600"
-                  >
-                    <ArrowDown size={16} />
-                  </button>
-                </div>
-              </div>
+              <CommentItem
+                key={comment._id}
+                comment={comment}
+                currentUserId={user?.id}
+                onVote={handleCommentVote}
+                onEdit={handleUpdateComment}
+                onDelete={handleDeleteComment}
+                formatDate={formatDate}
+              />
             ))}
           </div>
         ) : (
@@ -524,6 +530,34 @@ const PostDetailPage: React.FC = () => {
                 onClick={() => setShowDeleteModal(false)}
                 disabled={isDeleting}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Comment Confirmation Modal */}
+      {showDeleteCommentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Delete Comment
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this comment? This action cannot be undone.
+            </p>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={confirmDeleteComment}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                Delete
+              </button>
+              <button
+                onClick={cancelDeleteComment}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
               >
                 Cancel
               </button>

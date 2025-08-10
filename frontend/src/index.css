@@ -202,7 +202,7 @@ input:focus, textarea:focus, select:focus {
   border-radius: 1px;
 }
 
-/* Video Feed Container - Both modes use snap scrolling */
+/* Video Feed Container - TikTok-style with perfect centering */
 .video-feed-container {
   height: 100vh;
   width: 100%;
@@ -213,73 +213,39 @@ input:focus, textarea:focus, select:focus {
   position: relative;
 }
 
-/* Video Snap Item - Each video takes full viewport */
+/* Video Snap Item - Fixed centered layout like TikTok */
 .video-snap-item {
   height: 100vh;
   width: 100%;
-  scroll-snap-align: start;
+  scroll-snap-align: center;
   scroll-snap-stop: always;
   flex-shrink: 0;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
-/* Compact mode - ensure centering */
+/* Compact mode - perfect centering like TikTok */
 .video-snap-item.compact {
   background: linear-gradient(135deg, #0f1419 0%, #1a1a1a 50%, #0f1419 100%);
-  padding: 20px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  height: 100vh;
+  width: 100%;
+  position: relative;
 }
 
-/* Center compact videos both horizontally and vertically */
+/* Center wrapper ensures video stays perfectly centered */
 .video-snap-item.compact > div {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 80vh;
-}
-
-/* Additional centering for compact video containers */
-.video-compact-centered {
-  margin: 0 auto !important;
-  transform: translateX(0) !important;
-  left: 50% !important;
-  right: 50% !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* Ensure parent container centers the video */
-.video-snap-item.compact {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 20px !important;
-  box-sizing: border-box !important;
-}
-
-/* Override any potential margin issues */
-.video-snap-item.compact .video-compact-centered {
-  position: relative !important;
-  left: auto !important;
-  right: auto !important;
-  transform: none !important;
-}
-
-/* Video center wrapper for compact mode */
-.video-center-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
   height: 100%;
-  min-height: 100vh;
   position: relative;
 }
 
@@ -290,47 +256,9 @@ input:focus, textarea:focus, select:focus {
 
 /* Responsive adjustments for compact mode */
 @media (max-width: 768px) {
-  .video-snap-item.compact {
+  .video-center-wrapper {
     padding: 10px !important;
   }
-  
-  .video-compact-centered {
-    max-width: 100% !important;
-  }
-}
-
-/* Ensure smooth scrolling and perfect centering */
-.video-feed-container.compact-feed .video-snap-item.compact {
-  align-items: center;
-  justify-content: center;
-  scroll-snap-align: center;
-}
-
-/* Perfect centering utility for compact videos */
-.video-perfect-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: auto;
-  height: auto;
-  max-width: 90vw;
-  max-height: 80vh;
-}
-
-/* Fallback centering with flexbox */
-.video-flex-center {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 100vh !important;
-  width: 100% !important;
-}
-
-/* Prevent video overflow in compact mode */
-.video-snap-item.compact .video-compact-centered {
-  max-width: min(400px, 90vw) !important;
-  max-height: min(600px, 80vh) !important;
 }
 
 /* Video container optimization */
