@@ -53,7 +53,7 @@ const PostSchema = new mongoose_1.Schema({
     },
     category: {
         type: String,
-        enum: ['Grammar', 'Vocabulary', 'Speaking', 'Listening', 'Writing', 'Reading', 'IELTS', 'TOEFL', 'General'],
+        enum: ['Grammar', 'Vocabulary', 'Speaking', 'Listening', 'Writing', 'Reading', 'IELTS', 'TOEFL', 'General', 'ShortVideo'],
         required: true
     },
     author: {

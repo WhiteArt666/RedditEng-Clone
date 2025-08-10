@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
-const path_1 = __importDefault(require("path"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const postRoutes_1 = __importDefault(require("./routes/postRoutes"));
 const commentRoutes_1 = __importDefault(require("./routes/commentRoutes"));
@@ -23,15 +22,13 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
-// Serve static files
-app.use('/uploads', express_1.default.static(path_1.default.join(process.cwd(), 'uploads')));
 // Routes
 app.get('/', (req, res) => {
     res.json({
         message: 'English Learning Reddit API',
         version: '1.0.0',
         endpoints: {
-            health: '/api/health',
+            upload: '/api/upload',
             auth: '/api/auth',
             posts: '/api/posts',
             comments: '/api/comments'

@@ -7,7 +7,17 @@ const express_1 = __importDefault(require("express"));
 const auth_1 = require("../middleware/auth");
 const upload_1 = require("../middleware/upload");
 const errorHandler_1 = require("../middleware/errorHandler");
+const config_1 = require("../config/config");
 const router = express_1.default.Router();
+// @route   GET /api/upload/config
+// @desc    Get Cloudinary configuration for frontend
+// @access  Private
+router.get('/config', auth_1.authenticateToken, (0, errorHandler_1.asyncHandler)(async (req, res) => {
+    res.json({
+        cloudName: config_1.config.cloudinaryCloudName,
+        uploadPreset: 'ml_default' // Using the default unsigned preset
+    });
+}));
 // @route   POST /api/upload/image
 // @desc    Upload image to Cloudinary
 // @access  Private
