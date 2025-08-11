@@ -10,6 +10,8 @@ const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const postRoutes_1 = __importDefault(require("./routes/postRoutes"));
 const commentRoutes_1 = __importDefault(require("./routes/commentRoutes"));
 const uploadRoutes_1 = __importDefault(require("./routes/uploadRoutes"));
+const communityRoutes_1 = __importDefault(require("./routes/communityRoutes"));
+const communityMessageRoutes_1 = __importDefault(require("./routes/communityMessageRoutes"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const config_1 = require("./config/config");
 const database_1 = require("./config/database");
@@ -42,7 +44,9 @@ app.get('/', (req, res) => {
             upload: '/api/upload',
             auth: '/api/auth',
             posts: '/api/posts',
-            comments: '/api/comments'
+            comments: '/api/comments',
+            communities: '/api/communities',
+            messages: '/api/community-messages'
         }
     });
 });
@@ -50,6 +54,8 @@ app.use('/api/auth', authRoutes_1.default);
 app.use('/api/posts', postRoutes_1.default);
 app.use('/api/comments', commentRoutes_1.default);
 app.use('/api/upload', uploadRoutes_1.default);
+app.use('/api/communities', communityRoutes_1.default);
+app.use('/api/community-messages', communityMessageRoutes_1.default);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ message: 'English Learning Reddit API is running!' });

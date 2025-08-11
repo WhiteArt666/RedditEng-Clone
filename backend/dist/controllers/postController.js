@@ -8,6 +8,7 @@ const express_validator_1 = require("express-validator");
 const Post_1 = __importDefault(require("../models/Post"));
 const Comment_1 = __importDefault(require("../models/Comment"));
 const User_1 = __importDefault(require("../models/User"));
+const Community_1 = __importDefault(require("../models/Community"));
 const errorHandler_1 = require("../middleware/errorHandler");
 // Create new post
 exports.createPost = (0, errorHandler_1.asyncHandler)(async (req, res) => {
@@ -15,19 +16,38 @@ exports.createPost = (0, errorHandler_1.asyncHandler)(async (req, res) => {
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-    const { title, content, type, category, tags, difficulty } = req.body;
+    const { title, content, type, category, tags, difficulty, communityName } = req.body;
     const user = req.user;
+    let communityId = undefined;
+    // If posting to a community, verify membership
+    if (communityName) {
+        const community = await Community_1.default.findOne({ name: communityName.toLowerCase() });
+        if (!community) {
+            return res.status(404).json({ message: 'Community not found' });
+        }
+        // Check if user is a member
+        if (!community.members.includes(user._id)) {
+            return res.status(403).json({ message: 'You must be a member to post in this community' });
+        }
+        communityId = community._id;
+    }
     const post = new Post_1.default({
         title,
         content,
         type: type || 'text',
         category,
         author: user._id,
+        community: communityId,
         tags: tags || [],
         difficulty: difficulty || 'Medium'
     });
     await post.save();
     await post.populate('author', 'username avatar englishLevel karma');
+    if (communityId) {
+        await post.populate('community', 'name displayName avatar');
+        // Update community post count
+        await Community_1.default.findByIdAndUpdate(communityId, { $inc: { postCount: 1 } });
+    }
     res.status(201).json({
         message: 'Post created successfully',
         post
@@ -40,6 +60,7 @@ exports.getPosts = (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const category = req.query.category;
     const type = req.query.type;
     const difficulty = req.query.difficulty;
+    const communityName = req.query.community;
     const sortBy = req.query.sortBy || 'hot'; // hot, new, top
     // Build filter
     const filter = {};
@@ -49,6 +70,16 @@ exports.getPosts = (0, errorHandler_1.asyncHandler)(async (req, res) => {
         filter.type = type;
     if (difficulty)
         filter.difficulty = difficulty;
+    // Filter by community if specified
+    if (communityName) {
+        const community = await Community_1.default.findOne({ name: communityName.toLowerCase() });
+        if (community) {
+            filter.community = community._id;
+        }
+        else {
+            return res.status(404).json({ message: 'Community not found' });
+        }
+    }
     // Build sort
     let sort = {};
     switch (sortBy) {
@@ -66,6 +97,7 @@ exports.getPosts = (0, errorHandler_1.asyncHandler)(async (req, res) => {
     }
     const posts = await Post_1.default.find(filter)
         .populate('author', 'username avatar englishLevel karma')
+        .populate('community', 'name displayName avatar')
         .sort(sort)
         .skip((page - 1) * limit)
         .limit(limit)
@@ -88,7 +120,8 @@ exports.getPosts = (0, errorHandler_1.asyncHandler)(async (req, res) => {
 exports.getPost = (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const { id } = req.params;
     const post = await Post_1.default.findById(id)
-        .populate('author', 'username avatar englishLevel karma isVerified');
+        .populate('author', 'username avatar englishLevel karma isVerified')
+        .populate('community', 'name displayName avatar');
     if (!post) {
         return res.status(404).json({ message: 'Post not found' });
     }
@@ -126,16 +159,29 @@ exports.updatePost = (0, errorHandler_1.asyncHandler)(async (req, res) => {
 exports.deletePost = (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const { id } = req.params;
     const user = req.user;
-    const post = await Post_1.default.findById(id);
+    const post = await Post_1.default.findById(id).populate('community');
     if (!post) {
         return res.status(404).json({ message: 'Post not found' });
     }
-    // Check if user is the author
-    if (post.author.toString() !== user._id.toString()) {
+    // Check if user is the author or community moderator
+    const isAuthor = post.author.toString() === user._id.toString();
+    let isModerator = false;
+    if (post.community) {
+        const community = await Community_1.default.findById(post.community);
+        if (community) {
+            isModerator = community.moderators.includes(user._id) ||
+                community.creator.toString() === user._id.toString();
+        }
+    }
+    if (!isAuthor && !isModerator) {
         return res.status(403).json({ message: 'Not authorized to delete this post' });
     }
     // Delete all comments for this post
     await Comment_1.default.deleteMany({ post: id });
+    // Update community post count if it's a community post
+    if (post.community) {
+        await Community_1.default.findByIdAndUpdate(post.community, { $inc: { postCount: -1 } });
+    }
     // Delete the post
     await Post_1.default.findByIdAndDelete(id);
     res.json({ message: 'Post deleted successfully' });

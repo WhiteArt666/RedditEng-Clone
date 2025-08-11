@@ -5,6 +5,7 @@ export interface IPost extends Document {
     type: 'text' | 'flashcard' | 'grammar' | 'vocabulary' | 'pronunciation' | 'question';
     category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General' | 'ShortVideo';
     author: mongoose.Types.ObjectId;
+    community?: mongoose.Types.ObjectId;
     upvotes: mongoose.Types.ObjectId[];
     downvotes: mongoose.Types.ObjectId[];
     score: number;

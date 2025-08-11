@@ -34,93 +34,89 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const PostSchema = new mongoose_1.Schema({
-    title: {
+const CommunitySchema = new mongoose_1.Schema({
+    name: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        lowercase: true,
+        minlength: 3,
+        maxlength: 25,
+        match: /^[a-z0-9_]+$/
+    },
+    displayName: {
         type: String,
         required: true,
         trim: true,
-        maxlength: 300
+        minlength: 3,
+        maxlength: 50
     },
-    content: {
+    description: {
         type: String,
         required: true,
-        maxlength: 10000
+        maxlength: 500
     },
-    type: {
+    avatar: {
         type: String,
-        enum: ['text', 'flashcard', 'grammar', 'vocabulary', 'pronunciation', 'question'],
-        default: 'text'
+        default: ''
+    },
+    banner: {
+        type: String,
+        default: ''
     },
     category: {
         type: String,
-        enum: ['Grammar', 'Vocabulary', 'Speaking', 'Listening', 'Writing', 'Reading', 'IELTS', 'TOEFL', 'General', 'ShortVideo'],
+        enum: ['Grammar', 'Vocabulary', 'Speaking', 'Listening', 'Writing', 'Reading', 'IELTS', 'TOEFL', 'General'],
         required: true
     },
-    author: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
+    creator: {
+        type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    community: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Community'
-    },
-    upvotes: [{
-            type: mongoose_1.default.Schema.Types.ObjectId,
+    moderators: [{
+            type: mongoose_1.Schema.Types.ObjectId,
             ref: 'User'
         }],
-    downvotes: [{
-            type: mongoose_1.default.Schema.Types.ObjectId,
+    members: [{
+            type: mongoose_1.Schema.Types.ObjectId,
             ref: 'User'
         }],
-    score: {
+    memberCount: {
         type: Number,
         default: 0
     },
-    commentCount: {
+    postCount: {
         type: Number,
         default: 0
     },
+    isPrivate: {
+        type: Boolean,
+        default: false
+    },
+    rules: [{
+            type: String,
+            maxlength: 200
+        }],
     tags: [{
             type: String,
             trim: true,
             lowercase: true
-        }],
-    difficulty: {
-        type: String,
-        enum: ['Easy', 'Medium', 'Hard'],
-        default: 'Medium'
-    },
-    isAiGenerated: {
-        type: Boolean,
-        default: false
-    },
-    aiSuggestions: {
-        grammarCheck: String,
-        betterPhrase: String,
-        pronunciation: String
-    },
-    attachments: [{
-            type: {
-                type: String,
-                enum: ['image', 'audio']
-            },
-            url: String,
-            publicId: String
         }]
 }, {
     timestamps: true
 });
-// Index for better search performance
-PostSchema.index({ category: 1, createdAt: -1 });
-PostSchema.index({ author: 1, createdAt: -1 });
-PostSchema.index({ community: 1, createdAt: -1 });
-PostSchema.index({ score: -1, createdAt: -1 });
-PostSchema.index({ tags: 1 });
-// Calculate score based on votes
-PostSchema.pre('save', function (next) {
-    this.score = this.upvotes.length - this.downvotes.length;
+// Indexes for better performance
+CommunitySchema.index({ name: 1 });
+CommunitySchema.index({ category: 1 });
+CommunitySchema.index({ memberCount: -1 });
+CommunitySchema.index({ postCount: -1 });
+CommunitySchema.index({ createdAt: -1 });
+// Update member count when members array changes
+CommunitySchema.pre('save', function (next) {
+    this.memberCount = this.members.length;
     next();
 });
-exports.default = mongoose_1.default.model('Post', PostSchema);
-//# sourceMappingURL=Post.js.map
+exports.default = mongoose_1.default.model('Community', CommunitySchema);
+//# sourceMappingURL=Community.js.map
