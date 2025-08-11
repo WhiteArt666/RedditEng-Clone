@@ -18,7 +18,7 @@ const HomePage: React.FC<HomePageProps> = ({ sortBy = 'hot' }) => {
   const searchQuery = searchParams.get('q');
   
   // Use the custom hook for view mode management
-  const { viewMode, setViewMode, videoMode, setVideoMode } = useViewMode();
+  const { viewMode, setViewMode, videoMode } = useViewMode();
   
   // Capitalize category and difficulty from URL params to match backend
   const capitalizeFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);

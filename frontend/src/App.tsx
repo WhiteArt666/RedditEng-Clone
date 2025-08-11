@@ -45,7 +45,7 @@ function App() {
                     <Sidebar />
                     
                     {/* Main Content */}
-                    <main className="flex-1 max-w-2xl">
+                    <main className="flex-1 min-w-0 max-w-full">
                       <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/hot" element={<HomePage sortBy="hot" />} />

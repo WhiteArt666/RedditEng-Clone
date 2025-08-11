@@ -78,26 +78,26 @@ const RightSidebar: React.FC = () => {
   };
 
   return (
-    <aside className="hidden lg:block w-80 bg-white border border-gray-300 rounded h-fit sticky top-14">
+    <aside className="hidden lg:block w-72 xl:w-80 bg-white border border-gray-300 rounded h-fit sticky top-14">
       {/* Popular Communities */}
-      <div className="p-4 border-b border-gray-300">
-        <h3 className="text-sm font-bold text-gray-900 mb-3">Popular Communities</h3>
-        <div className="space-y-2">
+      <div className="p-3 lg:p-4 border-b border-gray-300">
+        <h3 className="text-xs lg:text-sm font-bold text-gray-900 mb-2 lg:mb-3">Popular Communities</h3>
+        <div className="space-y-1.5 lg:space-y-2">
           {popularCommunities.map((community) => (
             <div key={community._id} className="flex items-center justify-between">
               <Link
                 to={`/community/${community.name}`}
-                className="flex items-center space-x-2 flex-1 hover:bg-gray-50 p-1 rounded"
+                className="flex items-center space-x-2 flex-1 hover:bg-gray-50 p-1 rounded min-w-0"
               >
-                <div className="w-6 h-6 flex-shrink-0">
+                <div className="w-5 h-5 lg:w-6 lg:h-6 flex-shrink-0">
                   {community.avatar ? (
                     <img 
                       src={community.avatar} 
                       alt=""
-                      className="w-6 h-6 rounded-full object-cover"
+                      className="w-5 h-5 lg:w-6 lg:h-6 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                    <div className="w-5 h-5 lg:w-6 lg:h-6 bg-blue-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-bold">
                         {community.displayName.charAt(0).toUpperCase()}
                       </span>
@@ -105,7 +105,7 @@ const RightSidebar: React.FC = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-gray-900 truncate block">
+                  <span className="text-xs lg:text-sm font-medium text-gray-900 truncate block">
                     r/{community.name}
                   </span>
                   <span className="text-xs text-gray-500">
@@ -117,7 +117,7 @@ const RightSidebar: React.FC = () => {
                 <button
                   onClick={() => handleJoinCommunity(community._id, community.name)}
                   disabled={loading}
-                  className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 disabled:opacity-50"
+                  className="text-xs bg-blue-500 text-white px-2 py-0.5 lg:py-1 rounded hover:bg-blue-600 disabled:opacity-50 flex-shrink-0 ml-1"
                 >
                   Join
                 </button>
@@ -132,25 +132,25 @@ const RightSidebar: React.FC = () => {
       </div>
 
       {/* Today's Top Growing Communities */}
-      <div className="p-4 border-b border-gray-300">
-        <h3 className="text-sm font-bold text-gray-900 mb-3">Today's Top Growing Communities</h3>
-        <div className="space-y-2">
+      <div className="p-3 lg:p-4 border-b border-gray-300">
+        <h3 className="text-xs lg:text-sm font-bold text-gray-900 mb-2 lg:mb-3">Today's Top Growing</h3>
+        <div className="space-y-1.5 lg:space-y-2">
           {growingCommunities.map((community, index) => (
             <div key={community._id} className="flex items-center justify-between">
               <Link
                 to={`/community/${community.name}`}
-                className="flex items-center space-x-2 flex-1 hover:bg-gray-50 p-1 rounded"
+                className="flex items-center space-x-2 flex-1 hover:bg-gray-50 p-1 rounded min-w-0"
               >
-                <span className="text-xs text-gray-500 w-4">{index + 1}</span>
-                <div className="w-5 h-5 flex-shrink-0">
+                <span className="text-xs text-gray-500 w-3 lg:w-4 flex-shrink-0">{index + 1}</span>
+                <div className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0">
                   {community.avatar ? (
                     <img 
                       src={community.avatar} 
                       alt=""
-                      className="w-5 h-5 rounded-full object-cover"
+                      className="w-4 h-4 lg:w-5 lg:h-5 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="w-4 h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-bold">
                         {community.displayName.charAt(0).toUpperCase()}
                       </span>
@@ -158,7 +158,7 @@ const RightSidebar: React.FC = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm text-gray-900 truncate block">
+                  <span className="text-xs lg:text-sm text-gray-900 truncate block">
                     r/{community.name}
                   </span>
                   <span className="text-xs text-gray-500">
@@ -170,7 +170,7 @@ const RightSidebar: React.FC = () => {
                 <button
                   onClick={() => handleJoinCommunity(community._id, community.name)}
                   disabled={loading}
-                  className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 disabled:opacity-50"
+                  className="text-xs bg-blue-500 text-white px-2 py-0.5 lg:py-1 rounded hover:bg-blue-600 disabled:opacity-50 flex-shrink-0 ml-1"
                 >
                   Join
                 </button>
@@ -185,11 +185,11 @@ const RightSidebar: React.FC = () => {
       </div>
 
       {/* Premium */}
-      <div className="p-4">
-        <div className="bg-gradient-to-r from-orange-400 to-red-500 rounded p-4 text-white">
-          <h3 className="font-bold mb-2">Reddit Premium</h3>
-          <p className="text-sm mb-3">The best Reddit experience, with monthly Coins</p>
-          <button className="bg-white text-orange-500 px-4 py-1.5 rounded text-sm font-medium hover:bg-gray-100">
+      <div className="p-3 lg:p-4">
+        <div className="bg-gradient-to-r from-orange-400 to-red-500 rounded p-3 lg:p-4 text-white">
+          <h3 className="font-bold mb-1 lg:mb-2 text-sm lg:text-base">Reddit Premium</h3>
+          <p className="text-xs lg:text-sm mb-2 lg:mb-3">The best Reddit experience, with monthly Coins</p>
+          <button className="bg-white text-orange-500 px-3 lg:px-4 py-1 lg:py-1.5 rounded text-xs lg:text-sm font-medium hover:bg-gray-100 w-full lg:w-auto">
             Try Now
           </button>
         </div>
