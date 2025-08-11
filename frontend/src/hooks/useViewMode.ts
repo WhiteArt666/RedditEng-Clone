@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 export const useViewMode = () => {
   const location = useLocation();
-  const [viewMode, setViewMode] = useState<'grid' | 'video'>('video'); // Default to video mode
+  const [viewMode, setViewMode] = useState<'grid' | 'video'>('grid'); // Default to grid mode
   const [videoMode, setVideoMode] = useState<'compact' | 'fullscreen'>('compact');
 
   useEffect(() => {
@@ -11,11 +11,9 @@ export const useViewMode = () => {
     const isOnCategoryPage = location.pathname.includes('/category') || 
                             location.pathname.includes('/difficulty');
     
-    // If on homepage (root path), show video mode
-    // If on category/difficulty page, show grid mode
-    if (location.pathname === '/' || location.pathname === '') {
-      setViewMode('video');
-    } else if (isOnCategoryPage) {
+    // Default to grid mode for all pages
+    // Users can manually switch to video mode if they want
+    if (location.pathname === '/' || location.pathname === '' || isOnCategoryPage) {
       setViewMode('grid');
     }
   }, [location.pathname]);
