@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
-import { postsAPI } from '../services/api';
+import { postsAPI, communitiesAPI } from '../services/api';
 import { useCloudinaryUpload } from '../hooks/useCloudinaryUpload';
 import type { CloudinaryWidget } from '../services/cloudinaryService';
+import type { Community } from '../types';
 import { X, Send, BookOpen, Hash, Mic, Headphones, PenTool, Eye, Award, GraduationCap, MessageSquare, Upload, Video, Music } from 'lucide-react';
 
 const categories = [
@@ -34,6 +35,8 @@ const CreatePostPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const communityParam = searchParams.get('community');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -42,10 +45,12 @@ const CreatePostPage: React.FC = () => {
     category: 'General' as 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General',
     difficulty: 'Medium' as 'Easy' | 'Medium' | 'Hard',
     tags: [] as string[],
+    communityName: '' as string,
   });
   const [tagInput, setTagInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [userCommunities, setUserCommunities] = useState<Community[]>([]);
 
   // Cloudinary upload hook
   const {
@@ -70,6 +75,28 @@ const CreatePostPage: React.FC = () => {
       videoWidgetRef.current = createVideoWidget();
     }
   }, [isWidgetReady, createImageWidget, createAudioWidget, createVideoWidget]);
+
+  // Fetch user communities
+  useEffect(() => {
+    const fetchUserCommunities = async () => {
+      try {
+        const response = await communitiesAPI.getUserCommunities();
+        setUserCommunities(response.data.data || []);
+        
+        // Pre-select community if parameter exists
+        if (communityParam) {
+          setFormData(prev => ({
+            ...prev,
+            communityName: communityParam
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching user communities:', error);
+      }
+    };
+
+    fetchUserCommunities();
+  }, [communityParam]);
 
   if (!isAuthenticated) {
     navigate('/login');
@@ -172,6 +199,7 @@ const CreatePostPage: React.FC = () => {
       await postsAPI.createPost({
         ...formData,
         content: contentWithMedia,
+        communityName: formData.communityName || undefined,
       });
 
       console.log('Post created successfully');
@@ -189,17 +217,17 @@ const CreatePostPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Post</h1>
+    <div className="max-w-4xl mx-auto px-3 sm:px-0">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Create New Post</h1>
         
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md mb-6">
+          <div className="bg-red-50 border border-red-200 text-red-600 px-3 sm:px-4 py-3 rounded-md mb-4 sm:mb-6 text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -212,13 +240,13 @@ const CreatePostPage: React.FC = () => {
               value={formData.title}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
               placeholder="What's your post about?"
             />
           </div>
 
           {/* Type and Category Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
                 Post Type
@@ -228,7 +256,7 @@ const CreatePostPage: React.FC = () => {
                 name="type"
                 value={formData.type}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
               >
                 {types.map(type => (
                   <option key={type.value} value={type.value}>{type.label}</option>
@@ -245,12 +273,36 @@ const CreatePostPage: React.FC = () => {
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
               >
                 {categories.map(category => (
                   <option key={category.name} value={category.name}>{category.name}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Community Selection */}
+            <div>
+              <label htmlFor="communityName" className="block text-sm font-medium text-gray-700 mb-2">
+                Community (Optional)
+              </label>
+              <select
+                id="communityName"
+                name="communityName"
+                value={formData.communityName}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
+              >
+                <option value="">Post to your profile</option>
+                {userCommunities.map(community => (
+                  <option key={community._id} value={community.name}>
+                    r/{community.name} - {community.displayName}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Choose a community to post in, or leave blank to post to your profile
+              </p>
             </div>
           </div>
 
@@ -264,7 +316,7 @@ const CreatePostPage: React.FC = () => {
               name="difficulty"
               value={formData.difficulty}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
             >
               {difficulties.map(difficulty => (
                 <option key={difficulty} value={difficulty}>{difficulty}</option>
@@ -283,30 +335,30 @@ const CreatePostPage: React.FC = () => {
               value={formData.content}
               onChange={handleInputChange}
               required
-              rows={8}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              rows={6}
+              className="w-full px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base resize-none sm:resize-y"
               placeholder="Share your knowledge, ask a question, or start a discussion..."
             />
           </div>
 
           {/* Media Upload Section */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Add Media</h3>
+          <div className="space-y-4 sm:space-y-6">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900">Add Media</h3>
             
             {/* Cloudinary Upload Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {/* Image Upload Widget */}
               <div>
                 <button
                   type="button"
                   onClick={openImageWidget}
                   disabled={!isWidgetReady}
-                  className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-target"
                 >
                   <div className="text-center">
-                    <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                    <span className="text-sm font-medium text-gray-900">Upload Images</span>
-                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, GIF up to 5MB</p>
+                    <Upload className="mx-auto h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mb-2" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-900">Upload Images</span>
+                    <p className="text-xs text-gray-500 mt-1 hidden sm:block">JPG, PNG, GIF up to 5MB</p>
                   </div>
                 </button>
               </div>
@@ -317,12 +369,12 @@ const CreatePostPage: React.FC = () => {
                   type="button"
                   onClick={openAudioWidget}
                   disabled={!isWidgetReady}
-                  className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-target"
                 >
                   <div className="text-center">
-                    <Music className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                    <span className="text-sm font-medium text-gray-900">Upload Audio</span>
-                    <p className="text-xs text-gray-500 mt-1">MP3, WAV, M4A up to 10MB</p>
+                    <Music className="mx-auto h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mb-2" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-900">Upload Audio</span>
+                    <p className="text-xs text-gray-500 mt-1 hidden sm:block">MP3, WAV, M4A up to 10MB</p>
                   </div>
                 </button>
               </div>
@@ -333,12 +385,12 @@ const CreatePostPage: React.FC = () => {
                   type="button"
                   onClick={openVideoWidget}
                   disabled={!isWidgetReady}
-                  className="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-target"
                 >
                   <div className="text-center">
-                    <Video className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                    <span className="text-sm font-medium text-gray-900">Upload Videos</span>
-                    <p className="text-xs text-gray-500 mt-1">MP4, MOV, AVI up to 50MB</p>
+                    <Video className="mx-auto h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mb-2" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-900">Upload Videos</span>
+                    <p className="text-xs text-gray-500 mt-1 hidden sm:block">MP4, MOV, AVI up to 50MB</p>
                   </div>
                 </button>
               </div>
@@ -346,19 +398,19 @@ const CreatePostPage: React.FC = () => {
 
             {/* Display Uploaded Files */}
             {uploadedFiles.length > 0 && (
-              <div className="space-y-4">
-                <h4 className="text-md font-medium text-gray-900">Uploaded Files ({uploadedFiles.length})</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900">Uploaded Files ({uploadedFiles.length})</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {uploadedFiles.map((file) => (
-                    <div key={file.publicId} className="relative border border-gray-300 rounded-lg p-4">
+                    <div key={file.publicId} className="relative border border-gray-300 rounded-lg p-3 sm:p-4">
                       {file.resourceType === 'image' && (
                         <div>
                           <img
                             src={file.secureUrl}
                             alt={file.originalFilename}
-                            className="w-full h-32 object-cover rounded-md mb-2"
+                            className="w-full h-24 sm:h-32 object-cover rounded-md mb-2"
                           />
-                          <p className="text-sm font-medium text-gray-900 truncate">{file.originalFilename}</p>
+                          <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{file.originalFilename}</p>
                           <p className="text-xs text-gray-500">{(file.bytes / 1024 / 1024).toFixed(2)} MB</p>
                         </div>
                       )}
@@ -369,11 +421,11 @@ const CreatePostPage: React.FC = () => {
                             <video
                               src={file.secureUrl}
                               controls
-                              className="w-full h-32 rounded-md mb-2"
+                              className="w-full h-24 sm:h-32 rounded-md mb-2"
                             />
                           ) : (
-                            <div className="flex items-center justify-center h-32 bg-gray-100 rounded-md mb-2">
-                              <Music className="h-12 w-12 text-gray-400" />
+                            <div className="flex items-center justify-center h-24 sm:h-32 bg-gray-100 rounded-md mb-2">
+                              <Music className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
                             </div>
                           )}
                           
@@ -384,7 +436,7 @@ const CreatePostPage: React.FC = () => {
                             </audio>
                           )}
                           
-                          <p className="text-sm font-medium text-gray-900 truncate">{file.originalFilename}</p>
+                          <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{file.originalFilename}</p>
                           <p className="text-xs text-gray-500">
                             {(file.bytes / 1024 / 1024).toFixed(2)} MB
                             {file.duration && ` • ${Math.round(file.duration)}s`}
@@ -395,9 +447,9 @@ const CreatePostPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => removeCloudinaryFile(file.publicId)}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 touch-target"
                       >
-                        <X size={16} />
+                        <X size={14} className="sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   ))}
@@ -415,32 +467,32 @@ const CreatePostPage: React.FC = () => {
               {formData.tags.map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-700"
+                  className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm bg-primary-100 text-primary-700"
                 >
                   #{tag}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="ml-1 text-primary-500 hover:text-primary-700"
+                    className="ml-1 text-primary-500 hover:text-primary-700 touch-target"
                   >
-                    <X size={14} />
+                    <X size={12} className="sm:w-3.5 sm:h-3.5" />
                   </button>
                 </span>
               ))}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="flex-1 px-3 py-2 sm:py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base"
                 placeholder="Add a tag..."
               />
               <button
                 type="button"
                 onClick={addTag}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                className="px-4 py-2 sm:py-2.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm sm:text-base touch-target"
               >
                 Add
               </button>
@@ -448,23 +500,23 @@ const CreatePostPage: React.FC = () => {
           </div>
 
           {/* Submit */}
-          <div className="flex justify-end gap-4">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm sm:text-base touch-target"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base touch-target"
             >
               {isLoading ? (
                 <div className="loading-spinner w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
               ) : (
-                <Send size={16} />
+                <Send size={14} className="sm:w-4 sm:h-4" />
               )}
               {isLoading ? 'Creating...' : 'Create Post'}
             </button>

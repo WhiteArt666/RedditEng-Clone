@@ -6,6 +6,7 @@ export interface IPost extends Document {
   type: 'text' | 'flashcard' | 'grammar' | 'vocabulary' | 'pronunciation' | 'question';
   category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General' | 'ShortVideo';
   author: mongoose.Types.ObjectId;
+  community?: mongoose.Types.ObjectId;
   upvotes: mongoose.Types.ObjectId[];
   downvotes: mongoose.Types.ObjectId[];
   score: number;
@@ -53,6 +54,10 @@ const PostSchema = new Schema<IPost>({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  community: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Community'
   },
   upvotes: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -104,6 +109,7 @@ const PostSchema = new Schema<IPost>({
 // Index for better search performance
 PostSchema.index({ category: 1, createdAt: -1 });
 PostSchema.index({ author: 1, createdAt: -1 });
+PostSchema.index({ community: 1, createdAt: -1 });
 PostSchema.index({ score: -1, createdAt: -1 });
 PostSchema.index({ tags: 1 });
 

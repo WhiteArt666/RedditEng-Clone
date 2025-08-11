@@ -5,6 +5,8 @@ import authRoutes from './routes/authRoutes';
 import postRoutes from './routes/postRoutes';
 import commentRoutes from './routes/commentRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import communityRoutes from './routes/communityRoutes';
+import communityMessageRoutes from './routes/communityMessageRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import { config } from './config/config';
 import { connectDB } from './config/database';
@@ -42,7 +44,9 @@ app.get('/', (req, res) => {
       upload: '/api/upload',
       auth: '/api/auth',
       posts: '/api/posts',
-      comments: '/api/comments'
+      comments: '/api/comments',
+      communities: '/api/communities',
+      messages: '/api/community-messages'
     }
   });
 });
@@ -51,6 +55,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/communities', communityRoutes);
+app.use('/api/community-messages', communityMessageRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

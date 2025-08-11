@@ -5,10 +5,14 @@ import type {
   User, 
   Post, 
   Comment, 
+  Community,
+  CommunityMessage,
   RegisterData, 
   LoginData, 
   CreatePostData, 
   CreateCommentData, 
+  CreateCommunityData,
+  CreateMessageData,
   VoteData 
 } from '../types';
 
@@ -69,6 +73,7 @@ export const postsAPI = {
     category?: string;
     type?: string;
     difficulty?: string;
+    community?: string;
     sortBy?: 'hot' | 'new' | 'top';
   }): Promise<AxiosResponse<ApiResponse<{ posts: Post[]; pagination: { page: number; limit: number; total: number; pages: number } }>>> =>
     api.get('/posts', { params }),
@@ -115,6 +120,73 @@ export const commentsAPI = {
     
   voteComment: (id: string, data: VoteData): Promise<AxiosResponse<ApiResponse<{ score: number; userVote: string }>>> =>
     api.post(`/comments/${id}/vote`, data),
+};
+
+// Communities API
+export const communitiesAPI = {
+  createCommunity: (data: CreateCommunityData): Promise<AxiosResponse<ApiResponse<Community>>> =>
+    api.post('/communities', data),
+    
+  getCommunities: (params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    search?: string;
+    sortBy?: 'memberCount' | 'postCount' | 'createdAt';
+    order?: 'asc' | 'desc';
+  }): Promise<AxiosResponse<ApiResponse<Community[]>>> =>
+    api.get('/communities', { params }),
+    
+  getCommunity: (name: string): Promise<AxiosResponse<ApiResponse<Community>>> =>
+    api.get(`/communities/${name}`),
+    
+  updateCommunity: (name: string, data: Partial<CreateCommunityData>): Promise<AxiosResponse<ApiResponse<Community>>> =>
+    api.put(`/communities/${name}`, data),
+    
+  deleteCommunity: (name: string): Promise<AxiosResponse<ApiResponse<null>>> =>
+    api.delete(`/communities/${name}`),
+    
+  joinCommunity: (name: string): Promise<AxiosResponse<ApiResponse<{ memberCount: number }>>> =>
+    api.post(`/communities/${name}/join`),
+    
+  leaveCommunity: (name: string): Promise<AxiosResponse<ApiResponse<{ memberCount: number }>>> =>
+    api.post(`/communities/${name}/leave`),
+    
+  getCommunityMembers: (name: string, params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<AxiosResponse<ApiResponse<User[]>>> =>
+    api.get(`/communities/${name}/members`, { params }),
+    
+  getUserCommunities: (): Promise<AxiosResponse<ApiResponse<Community[]>>> =>
+    api.get('/communities/user'),
+    
+  toggleModerator: (name: string, userId: string): Promise<AxiosResponse<ApiResponse<{ moderators: string[] }>>> =>
+    api.post(`/communities/${name}/moderators`, { userId }),
+};
+
+// Community Messages API
+export const communityMessagesAPI = {
+  sendMessage: (communityName: string, data: CreateMessageData): Promise<AxiosResponse<ApiResponse<CommunityMessage>>> =>
+    api.post(`/community-messages/${communityName}/messages`, data),
+    
+  getCommunityMessages: (communityName: string, params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<AxiosResponse<ApiResponse<CommunityMessage[]>>> =>
+    api.get(`/community-messages/${communityName}/messages`, { params }),
+    
+  editMessage: (messageId: string, data: { content: string }): Promise<AxiosResponse<ApiResponse<CommunityMessage>>> =>
+    api.put(`/community-messages/messages/${messageId}`, data),
+    
+  deleteMessage: (messageId: string): Promise<AxiosResponse<ApiResponse<null>>> =>
+    api.delete(`/community-messages/messages/${messageId}`),
+    
+  addReaction: (messageId: string, emoji: string): Promise<AxiosResponse<ApiResponse<{ reactions: { user: string; emoji: string }[] }>>> =>
+    api.post(`/community-messages/messages/${messageId}/reactions`, { emoji }),
+    
+  getRecentMessages: (limit?: number): Promise<AxiosResponse<ApiResponse<CommunityMessage[]>>> =>
+    api.get('/community-messages/messages/recent', { params: { limit } }),
 };
 
 export default api;

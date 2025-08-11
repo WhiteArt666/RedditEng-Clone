@@ -10,6 +10,81 @@ export interface User {
   joinedAt: string;
 }
 
+export interface Community {
+  _id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  avatar?: string;
+  banner?: string;
+  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General';
+  creator: {
+    _id: string;
+    username: string;
+    avatar?: string;
+    englishLevel: string;
+    karma: number;
+    isVerified?: boolean;
+  };
+  moderators: {
+    _id: string;
+    username: string;
+    avatar?: string;
+    englishLevel: string;
+    karma: number;
+    isVerified?: boolean;
+  }[];
+  members?: string[]; // Array of user IDs
+  memberCount: number;
+  postCount: number;
+  isPrivate: boolean;
+  rules: string[];
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommunityMessage {
+  _id: string;
+  community: {
+    _id: string;
+    name: string;
+    displayName: string;
+    avatar?: string;
+  };
+  sender: {
+    _id: string;
+    username: string;
+    avatar?: string;
+    englishLevel: string;
+    karma: number;
+    isVerified?: boolean;
+  };
+  content: string;
+  type: 'text' | 'image' | 'audio';
+  attachments?: {
+    type: 'image' | 'audio';
+    url: string;
+    publicId: string;
+  }[];
+  isEdited: boolean;
+  editedAt?: string;
+  reactions: {
+    user: string;
+    emoji: string;
+  }[];
+  replyTo?: {
+    _id: string;
+    content: string;
+    sender: string;
+    createdAt: string;
+  };
+  isDeleted: boolean;
+  deletedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Post {
   _id: string;
   title: string;
@@ -23,6 +98,12 @@ export interface Post {
     englishLevel: string;
     karma: number;
     isVerified?: boolean;
+  };
+  community?: {
+    _id: string;
+    name: string;
+    displayName: string;
+    avatar?: string;
   };
   upvotes: string[];
   downvotes: string[];
@@ -103,6 +184,28 @@ export interface CreatePostData {
   category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General' | 'ShortVideo';
   tags?: string[];
   difficulty?: 'Easy' | 'Medium' | 'Hard';
+  communityName?: string;
+}
+
+export interface CreateCommunityData {
+  name: string;
+  displayName: string;
+  description: string;
+  category: 'Grammar' | 'Vocabulary' | 'Speaking' | 'Listening' | 'Writing' | 'Reading' | 'IELTS' | 'TOEFL' | 'General';
+  isPrivate?: boolean;
+  rules?: string[];
+  tags?: string[];
+}
+
+export interface CreateMessageData {
+  content: string;
+  type?: 'text' | 'image' | 'audio';
+  attachments?: {
+    type: 'image' | 'audio';
+    url: string;
+    publicId: string;
+  }[];
+  replyTo?: string;
 }
 
 export interface CreateCommentData {
@@ -124,6 +227,9 @@ export interface ApiResponse<T> {
   posts?: Post[];
   comment?: Comment;
   comments?: Comment[];
+  community?: Community;
+  communities?: Community[];
+  messages?: CommunityMessage[];
   pagination?: {
     page: number;
     limit: number;

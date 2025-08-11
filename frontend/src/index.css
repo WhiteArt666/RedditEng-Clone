@@ -4,163 +4,208 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme */
+/* Reddit-style theme colors */
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --border-color: #374151;
-  --accent-primary: #3b82f6;
-  --accent-secondary: #1d4ed8;
+  --reddit-orange: #ff4500;
+  --reddit-blue: #0079d3;
+  --reddit-gray: #878a8c;
+  --reddit-light-gray: #f6f7f8;
+  --reddit-dark-gray: #1a1a1b;
+  --reddit-border: #edeff1;
+  --reddit-bg: #DAE0E6;
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--reddit-bg);
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  color: #1a1a1b;
 }
 
-/* Custom scrollbar for dark theme */
-::-webkit-scrollbar {
-  width: 8px;
+/* Custom utility classes */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
-  border-radius: 4px;
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+/* Loading spinner animation */
+.loading-spinner {
+  animation: spin 1s linear infinite;
 }
 
-/* Override default styles for dark theme */
-.bg-white {
-  background-color: var(--bg-secondary) !important;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.bg-gray-50 {
-  background-color: var(--bg-tertiary) !important;
+/* Card hover effects - Reddit style */
+.card-hover {
+  transition: border-color 0.2s ease-in-out;
 }
 
-.bg-gray-100 {
-  background-color: var(--bg-tertiary) !important;
+.card-hover:hover {
+  border-color: #898989;
 }
 
-.text-gray-900 {
-  color: var(--text-primary) !important;
-}
-
-.text-gray-700 {
-  color: var(--text-secondary) !important;
-}
-
-.text-gray-600 {
-  color: var(--text-secondary) !important;
-}
-
-.text-gray-500 {
-  color: var(--text-muted) !important;
-}
-
-.text-gray-400 {
-  color: var(--text-muted) !important;
-}
-
-.border-gray-200 {
-  border-color: var(--border-color) !important;
-}
-
-.border-gray-300 {
-  border-color: var(--border-color) !important;
-}
-
-/* Forms */
-input, textarea, select {
-  background-color: var(--bg-tertiary) !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border-color) !important;
-}
-
-input:focus, textarea:focus, select:focus {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--accent-primary) !important;
-}
-
-/* Buttons */
-.btn-primary {
-  background-color: var(--accent-primary) !important;
-  color: var(--text-primary) !important;
-}
-
-.btn-primary:hover {
-  background-color: var(--accent-secondary) !important;
-}
-
-/* Vote buttons animation */
+/* Vote button styles */
 .vote-btn {
-  transition: all 0.2s ease;
+  transition: all 0.2s ease-in-out;
 }
 
 .vote-btn:hover {
   transform: scale(1.1);
 }
 
-/* Card hover effects */
-.card-hover {
-  transition: all 0.3s ease;
+/* Custom scrollbar - Reddit style */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
-/* Loading animation */
-.loading-spinner {
-  animation: spin 1s linear infinite;
-  border-color: var(--text-muted) !important;
-  border-top-color: var(--accent-primary) !important;
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }
 
-/* Hide scrollbar for video feed */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Focus styles */
+.focus\:ring-orange-500:focus {
+  --tw-ring-color: var(--reddit-orange);
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* Reddit-style button */
+.btn-reddit {
+  background-color: var(--reddit-orange);
+  color: white;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-/* Smooth snap scrolling */
-.snap-y {
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+.btn-reddit:hover {
+  background-color: #e03d00;
 }
 
-.snap-start {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+.btn-reddit:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
-/* Video feed container optimization */
+/* Post card styles */
+.post-card {
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.post-card:hover {
+  border-color: #898989;
+}
+
+/* Vote section styles */
+.vote-section {
+  background-color: #f8f9fa;
+  width: 40px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header styles */
+.header-reddit {
+  background-color: white;
+  border-bottom: 1px solid var(--reddit-border);
+  height: 48px;
+}
+
+/* Sidebar styles */
+.sidebar-reddit {
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+/* Search input styles */
+.search-input {
+  background-color: var(--reddit-light-gray);
+  border: 1px solid var(--reddit-border);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.search-input:focus {
+  background-color: white;
+  border-color: var(--reddit-blue);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--reddit-blue);
+}
+
+/* Community name styles */
+.community-name {
+  font-weight: 700;
+  color: #1a1a1b;
+  text-decoration: none;
+}
+
+.community-name:hover {
+  text-decoration: underline;
+}
+
+/* User mention styles */
+.user-mention {
+  color: var(--reddit-blue);
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.user-mention:hover {
+  text-decoration: underline;
+}
+
+/* Video feed specific styles */
 .video-feed-container {
   height: 100vh;
   overflow-y: scroll;
@@ -170,7 +215,6 @@ input:focus, textarea:focus, select:focus {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Individual video container */
 .video-snap-item {
   height: 100vh;
   width: 100%;
@@ -179,16 +223,14 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 0;
+  padding: 0.625rem 0;
 }
 
-/* Compact mode specific styling */
 .video-snap-item.compact {
   background: linear-gradient(135deg, #000000 0%, #000000 50%, #000000 100%);
-  padding: 20px;
+  padding: 1.25rem;
 }
 
-/* Improve scrollbar for video feed */
 .video-feed-container::-webkit-scrollbar {
   width: 2px;
 }
@@ -202,147 +244,60 @@ input:focus, textarea:focus, select:focus {
   border-radius: 1px;
 }
 
-/* Video Feed Container - TikTok-style with perfect centering */
-.video-feed-container {
-  height: 100vh;
-  width: 100%;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  position: relative;
-}
-
-/* Video Snap Item - Fixed centered layout like TikTok */
-.video-snap-item {
-  height: 100vh;
-  width: 100%;
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
-  flex-shrink: 0;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-/* Compact mode - perfect centering like TikTok */
-.video-snap-item.compact {
-  background: linear-gradient(135deg, #0f1419 0%, #1a1a1a 50%, #0f1419 100%);
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100%;
-  position: relative;
-}
-
-/* Center wrapper ensures video stays perfectly centered */
-.video-snap-item.compact > div {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-/* Compact feed container */
-.compact-feed {
-  background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
-}
-
-/* Responsive adjustments for compact mode */
+/* Responsive design */
 @media (max-width: 768px) {
-  .video-center-wrapper {
-    padding: 10px !important;
+  .sidebar-reddit {
+    display: none;
+  }
+  
+  .mobile-optimized {
+    padding: 0.75rem;
+  }
+  
+  button, .vote-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .card-hover:hover {
+    transform: none;
   }
 }
 
-/* Video container optimization */
-.video-container {
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  contain: layout style paint;
+/* Accessibility */
+*:focus-visible {
+  outline: 2px solid var(--reddit-blue);
+  outline-offset: 2px;
 }
 
-/* Full screen video layout */
-.video-fullscreen {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-}
-
-/* Compact video layout */
-.video-compact {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.75rem;
-}
-
-/* Responsive video containers */
-@media (max-width: 640px) {
-  .video-compact {
-    width: 100%;
-    max-width: 100vw;
-    border-radius: 0;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-/* Line clamp utility */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+@media (prefers-contrast: high) {
+  .card-hover {
+    border: 2px solid;
+  }
+  
+  button {
+    border: 2px solid;
+  }
 }
 
-/* Ensure proper spacing for fixed header */
-.video-feed-container {
-  padding-top: 4rem; /* Space for fixed header */
-}
-
-/* Perfect centering for compact video view */
-.video-feed-compact-center {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 100vh !important;
-  height: 100vh !important;
-  width: 100% !important;
-  position: relative !important;
-}
-
-/* Compact video item centering */
-.video-snap-item.compact {
-  background: linear-gradient(135deg, #0f1419 0%, #1a1a1a 50%, #0f1419 100%) !important;
-  padding: 20px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 100vh !important;
-  position: relative !important;
-}
-
-/* Video wrapper for perfect centering */
-.video-center-wrapper {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  height: 100vh !important;
-  min-height: 100vh !important;
-  position: relative !important;
-}
-
-/* Ensure video stays centered */
-.video-compact-centered {
-  margin: 0 auto !important;
-  position: relative !important;
-  display: block !important;
-  transform: none !important;
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break {
+    page-break-inside: avoid;
+  }
 }

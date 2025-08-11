@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Filter, Video, Grid3X3, Maximize, Minimize } from 'lucide-react';
+import { TrendingUp, Clock, Star, Filter, Video, Grid3X3 } from 'lucide-react';
 import PostCard from '../components/PostCard';
 import VideoFeed from '../components/VideoFeed';
 import { postsAPI } from '../services/api';
@@ -29,21 +29,21 @@ const HomePage: React.FC<HomePageProps> = ({ sortBy = 'hot' }) => {
   const [selectedSort, setSelectedSort] = useState(sortBy);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['posts', currentPage, selectedCategory, selectedDifficulty, selectedSort, searchQuery, viewMode, videoMode],
+    queryKey: ['posts', currentPage, selectedCategory, selectedDifficulty, selectedSort, searchQuery],
     queryFn: async () => {
       if (searchQuery) {
         return postsAPI.searchPosts({
           q: searchQuery,
           category: selectedCategory || undefined,
           page: currentPage,
-          limit: viewMode === 'video' ? 50 : 10
+          limit: 25
         });
       }
       
       return postsAPI.getPosts({
         page: currentPage,
-        limit: viewMode === 'video' ? 50 : 10,
-        category: viewMode === 'video' ? undefined : (selectedCategory || undefined),
+        limit: 25,
+        category: selectedCategory || undefined,
         difficulty: selectedDifficulty || undefined,
         sortBy: selectedSort
       });
@@ -64,28 +64,34 @@ const HomePage: React.FC<HomePageProps> = ({ sortBy = 'hot' }) => {
     refetch();
   };
 
-  const categories = [
-    'Grammar', 'Vocabulary', 'Speaking', 'Listening', 
-    'Writing', 'Reading', 'IELTS', 'TOEFL', 'General'
-  ];
-
-  const difficulties = ['Easy', 'Medium', 'Hard'];
-
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="loading-spinner w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full"></div>
+      <div className="max-w-2xl mx-auto">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="bg-white border border-gray-300 rounded mb-2 p-4 animate-pulse">
+            <div className="flex">
+              <div className="w-10 bg-gray-200 rounded mr-3">
+                <div className="h-16"></div>
+              </div>
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
+      <div className="max-w-2xl mx-auto text-center py-12">
         <p className="text-red-600 mb-4">Failed to load posts</p>
         <button
           onClick={() => refetch()}
-          className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
+          className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
         >
           Try Again
         </button>
@@ -94,187 +100,128 @@ const HomePage: React.FC<HomePageProps> = ({ sortBy = 'hot' }) => {
   }
 
   return (
-    <div className={viewMode === 'video' ? 'h-screen overflow-hidden' : 'space-y-6'}>
-      {/* Header - Always visible but compact in video mode */}
-      {viewMode === 'grid' ? (
+    <div className="max-w-2xl mx-auto">
+      {/* Sort Bar with Video Toggle */}
+      <div className="bg-white border border-gray-300 rounded mb-2 p-2">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {searchQuery ? `Search results for "${searchQuery}"` :
-               category ? `r/${category}` :
-               difficulty ? `${difficulty} Level` :
-               selectedSort === 'hot' ? 'Hot Posts' :
-               selectedSort === 'new' ? 'New Posts' :
-               'Top Posts'}
-            </h1>
-            <p className="text-gray-600 mt-1">
-              {pagination?.total || 0} posts
-            </p>
-          </div>
-          
-          {/* View Mode Toggle */}
-          <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center space-x-2">
             <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+              onClick={() => setSelectedSort('hot')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded text-sm font-medium transition-colors ${
+                selectedSort === 'hot'
+                  ? 'bg-gray-200 text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-100'
               }`}
-              title="Grid View"
             >
-              <Grid3X3 size={20} />
+              <TrendingUp size={16} />
+              <span>Hot</span>
             </button>
-            <button
-              onClick={() => setViewMode('video')}
-              className={`p-2 rounded-md transition-colors ${
-                (viewMode as string) === 'video'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              title="Video Feed"
-            >
-              <Video size={20} />
-            </button>
-          </div>
-        </div>
-      ) : (
-        // Compact header for video mode - Fixed at top
-        <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center space-x-3">
-              <h1 className="text-lg font-bold text-white">
-                English Learning Videos
-              </h1>
-              <span className="text-sm text-white/70">
-                {posts.filter(p => p.content.includes('🎥') || /\[Video:.*?\]\(.*?\)/i.test(p.content)).length} videos
-              </span>
-            </div>
             
-            {/* Video Mode Controls */}
-            <div className="flex items-center space-x-2">
-              {/* Video Size Toggle */}
-              <div className="flex items-center space-x-1 bg-white/10 rounded-lg p-1">
-                <button
-                  onClick={() => setVideoMode('compact')}
-                  className={`p-2 rounded-md transition-colors ${
-                    videoMode === 'compact'
-                      ? 'bg-white/20 text-white'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  title="Compact View"
-                >
-                  <Minimize size={16} />
-                </button>
-                <button
-                  onClick={() => setVideoMode('fullscreen')}
-                  className={`p-2 rounded-md transition-colors ${
-                    videoMode === 'fullscreen'
-                      ? 'bg-white/20 text-white'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                  title="Fullscreen View"
-                >
-                  <Maximize size={16} />
-                </button>
-              </div>
-              
-              {/* View Mode Toggle */}
-              <div className="flex items-center space-x-2 bg-white/10 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className="p-2 rounded-md text-white/70 hover:text-white transition-colors"
-                  title="Grid View"
-                >
-                  <Grid3X3 size={18} />
-                </button>
-                <button
-                  onClick={() => setViewMode('video')}
-                  className="p-2 rounded-md bg-white/20 text-white transition-colors"
-                  title="Video Feed"
-                >
-                  <Video size={18} />
-                </button>
-              </div>
-            </div>
+            <button
+              onClick={() => setSelectedSort('new')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded text-sm font-medium transition-colors ${
+                selectedSort === 'new'
+                  ? 'bg-gray-200 text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Clock size={16} />
+              <span>New</span>
+            </button>
+            
+            <button
+              onClick={() => setSelectedSort('top')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded text-sm font-medium transition-colors ${
+                selectedSort === 'top'
+                  ? 'bg-gray-200 text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Star size={16} />
+              <span>Top</span>
+            </button>
           </div>
-        </div>
-      )}
 
-      {/* Filters - Only show in grid mode */}
-      {viewMode === 'grid' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center space-x-2">
-              <Filter size={16} className="text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filters:</span>
+          <div className="flex items-center space-x-2">
+            {/* View Mode Toggle */}
+            <div className="flex items-center space-x-1 bg-gray-100 rounded p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="Card View"
+              >
+                <Grid3X3 size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('video')}
+                className={`p-2 rounded transition-colors ${
+                  viewMode === 'video'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="Video Feed"
+              >
+                <Video size={16} />
+              </button>
             </div>
 
-            {/* Category Filter */}
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            {/* Filters - Only show in grid mode */}
+            {viewMode === 'grid' && (
+              <>
+                <Filter size={16} className="text-gray-400" />
+                
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="">All Categories</option>
+                  <option value="Grammar">Grammar</option>
+                  <option value="Vocabulary">Vocabulary</option>
+                  <option value="Speaking">Speaking</option>
+                  <option value="Listening">Listening</option>
+                  <option value="Writing">Writing</option>
+                  <option value="Reading">Reading</option>
+                  <option value="IELTS">IELTS</option>
+                  <option value="TOEFL">TOEFL</option>
+                  <option value="General">General</option>
+                </select>
 
-            {/* Difficulty Filter */}
-            <select
-              value={selectedDifficulty}
-              onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">All Levels</option>
-              {difficulties.map(diff => (
-                <option key={diff} value={diff}>{diff}</option>
-              ))}
-            </select>
-
-            {/* Sort Filter */}
-            <select
-              value={selectedSort}
-              onChange={(e) => setSelectedSort(e.target.value as 'hot' | 'new' | 'top')}
-              className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="hot">🔥 Hot</option>
-              <option value="new">🆕 New</option>
-              <option value="top">⭐ Top</option>
-            </select>
-
-            {/* Clear Filters */}
-            {(selectedCategory || selectedDifficulty) && (
-              <button
-                onClick={() => {
-                  setSelectedCategory('');
-                  setSelectedDifficulty('');
-                }}
-                className="text-sm text-primary-600 hover:text-primary-800 font-medium"
-              >
-                Clear Filters
-              </button>
+                <select
+                  value={selectedDifficulty}
+                  onChange={(e) => setSelectedDifficulty(e.target.value)}
+                  className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="">All Levels</option>
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </>
             )}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Posts */}
-      <div className={viewMode === 'video' ? 'h-screen overflow-hidden' : ''}>
-        {viewMode === 'video' ? (
-          <div className="h-full w-full">
-            <VideoFeed posts={posts} onVote={handleVote} videoMode={videoMode} />
-          </div>
-        ) : (
-          <div className="space-y-4">
+      {/* Content */}
+      {viewMode === 'video' ? (
+        <div className="h-screen overflow-hidden -mx-4">
+          <VideoFeed posts={posts} onVote={handleVote} videoMode={videoMode} />
+        </div>
+      ) : (
+        <>
+          {/* Posts */}
+          <div>
             {posts.length > 0 ? (
               posts.map((post: Post) => (
                 <PostCard key={post._id} post={post} onVote={handleVote} />
               ))
             ) : (
-              <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+              <div className="bg-white border border-gray-300 rounded p-8 text-center">
                 <p className="text-gray-500 text-lg mb-2">No posts found</p>
                 <p className="text-gray-400">
                   {searchQuery 
@@ -285,45 +232,47 @@ const HomePage: React.FC<HomePageProps> = ({ sortBy = 'hot' }) => {
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Pagination - Only show in grid mode */}
-      {viewMode === 'grid' && pagination && pagination.pages > 1 && (
-        <div className="flex items-center justify-center space-x-2 py-8">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          
-          {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-            const page = i + 1;
-            return (
+          {/* Pagination */}
+          {pagination && pagination.pages > 1 && (
+            <div className="flex items-center justify-center space-x-2 py-8">
               <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-2 border text-sm font-medium rounded-md ${
-                  page === currentPage
-                    ? 'bg-primary-600 border-primary-600 text-white'
-                    : 'border-gray-300 text-gray-500 hover:text-gray-700'
-                }`}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(currentPage - 1)}
+                className="px-3 py-2 border border-gray-300 rounded text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {page}
+                Previous
               </button>
-            );
-          })}
-          
-          <button
-            disabled={currentPage === pagination.pages}
-            onClick={() => setCurrentPage(currentPage + 1)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 border text-sm font-medium rounded ${
+                        page === currentPage
+                          ? 'bg-orange-500 border-orange-500 text-white'
+                          : 'border-gray-300 text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <button
+                disabled={currentPage === pagination.pages}
+                onClick={() => setCurrentPage(currentPage + 1)}
+                className="px-3 py-2 border border-gray-300 rounded text-sm font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

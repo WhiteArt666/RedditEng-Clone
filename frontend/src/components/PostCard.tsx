@@ -8,11 +8,12 @@ import {
   MoreHorizontal,
   Clock,
   Award,
-  User
+  ExternalLink
 } from 'lucide-react';
 import type { Post } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { postsAPI } from '../services/api';
+import MediaRenderer from './MediaRenderer';
 
 interface PostCardProps {
   post: Post;
@@ -94,35 +95,35 @@ const PostCard: React.FC<PostCardProps> = ({ post, onVote }) => {
   };
 
   return (
-    <article className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow card-hover">
+    <article className="bg-white border border-gray-300 rounded hover:border-gray-400 transition-colors mb-2">
       <div className="flex">
         {/* Vote Section */}
-        <div className="flex flex-col items-center p-4 bg-gray-50 rounded-l-lg">
+        <div className="flex flex-col items-center px-2 py-2 w-10 bg-gray-50">
           <button
             onClick={() => handleVote('up')}
             disabled={!isAuthenticated || isVoting}
-            className={`vote-btn p-1 rounded transition-colors ${
+            className={`p-1 rounded transition-colors ${
               userVote === 'up'
-                ? 'text-orange-500 bg-orange-100'
-                : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
+                ? 'text-red-500 bg-red-50'
+                : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
             } ${!isAuthenticated ? 'cursor-not-allowed opacity-50' : ''}`}
           >
             <ArrowUp size={20} />
           </button>
           
-          <span className={`text-sm font-semibold my-1 ${
-            score > 0 ? 'text-orange-500' : 
+          <span className={`text-xs font-bold my-1 ${
+            score > 0 ? 'text-red-500' : 
             score < 0 ? 'text-blue-500' : 'text-gray-500'
           }`}>
-            {score}
+            {score >= 1000 ? `${(score / 1000).toFixed(1)}k` : score}
           </span>
           
           <button
             onClick={() => handleVote('down')}
             disabled={!isAuthenticated || isVoting}
-            className={`vote-btn p-1 rounded transition-colors ${
+            className={`p-1 rounded transition-colors ${
               userVote === 'down'
-                ? 'text-blue-500 bg-blue-100'
+                ? 'text-blue-500 bg-blue-50'
                 : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'
             } ${!isAuthenticated ? 'cursor-not-allowed opacity-50' : ''}`}
           >
@@ -131,116 +132,116 @@ const PostCard: React.FC<PostCardProps> = ({ post, onVote }) => {
         </div>
 
         {/* Content Section */}
-        <div className="flex-1 p-4">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <span className="text-lg">{getTypeIcon(post.type)}</span>
+        <div className="flex-1 p-3 min-w-0">
+          {/* Meta Information */}
+          <div className="flex items-center text-xs text-gray-500 mb-1 space-x-1">
+            <span className="text-sm">{getTypeIcon(post.type)}</span>
+            {post.community ? (
+              <Link
+                to={`/community/${post.community.name}`}
+                className="font-medium text-black hover:underline flex items-center space-x-1"
+              >
+                {post.community.avatar && (
+                  <img 
+                    src={post.community.avatar} 
+                    alt=""
+                    className="w-4 h-4 rounded-full object-cover"
+                  />
+                )}
+                <span>r/{post.community.name}</span>
+              </Link>
+            ) : (
               <Link
                 to={`/category/${post.category.toLowerCase()}`}
-                className="font-medium text-primary-600 hover:text-primary-800"
+                className="font-medium text-black hover:underline"
               >
                 r/{post.category}
               </Link>
-              <span>•</span>
-              <span>Posted by</span>
-              <Link
-                to={`/user/${post.author.username}`}
-                className="hover:underline flex items-center space-x-1"
-              >
-                {post.author.isVerified && <Award size={14} className="text-yellow-500" />}
-                <span>u/{post.author.username}</span>
-              </Link>
-              <span>•</span>
-              <div className="flex items-center space-x-1">
-                <Clock size={14} />
-                <span>{formatTimeAgo(post.createdAt)}</span>
-              </div>
+            )}
+            <span>•</span>
+            <span>Posted by</span>
+            <Link
+              to={`/user/${post.author.username}`}
+              className="hover:underline flex items-center space-x-1"
+            >
+              {post.author.isVerified && <Award size={12} className="text-yellow-500" />}
+              <span>u/{post.author.username}</span>
+            </Link>
+            <span>•</span>
+            <div className="flex items-center space-x-1">
+              <Clock size={12} />
+              <span>{formatTimeAgo(post.createdAt)}</span>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(post.difficulty)}`}>
-                {post.difficulty}
-              </span>
-              <button className="p-1 rounded hover:bg-gray-100">
-                <MoreHorizontal size={16} className="text-gray-400" />
-              </button>
-            </div>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getDifficultyColor(post.difficulty)}`}>
+              {post.difficulty}
+            </span>
           </div>
 
           {/* Title */}
           <Link to={`/post/${post._id}`}>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2 hover:text-primary-600 transition-colors">
+            <h2 className="text-lg font-medium text-gray-900 mb-2 hover:text-blue-600 transition-colors line-clamp-2">
               {post.title}
             </h2>
           </Link>
 
-          {/* Content Preview */}
-          <div className="text-gray-700 mb-3 line-clamp-3">
-            {textContent.length > 200 
-              ? `${textContent.substring(0, 200)}...` 
-              : textContent
-            }
+          {/* Content Preview and Media */}
+          {textContent && (
+            <div className="text-sm text-gray-700 mb-3 line-clamp-3">
+              {textContent.length > 300
+                ? `${textContent.substring(0, 300)}...` 
+                : textContent
+              }
+            </div>
+          )}
+
+          {/* Media Content */}
+          <div className="mb-3">
+            <MediaRenderer content={post.content} compact={true} />
           </div>
 
           {/* Tags */}
           {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-1 mb-3">
               {post.tags.slice(0, 5).map((tag, index) => (
                 <Link
                   key={index}
                   to={`/tag/${tag}`}
-                  className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+                  className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300 transition-colors"
                 >
                   #{tag}
                 </Link>
               ))}
               {post.tags.length > 5 && (
-                <span className="text-xs text-gray-500">+{post.tags.length - 5} more</span>
-              )}
-            </div>
-          )}
-
-          {/* AI Suggestions */}
-          {post.aiSuggestions && Object.keys(post.aiSuggestions).length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-sm font-medium text-blue-900">🤖 AI Suggestions</span>
-              </div>
-              {post.aiSuggestions.grammarCheck && (
-                <p className="text-sm text-blue-800 mb-1">
-                  <strong>Grammar:</strong> {post.aiSuggestions.grammarCheck}
-                </p>
-              )}
-              {post.aiSuggestions.betterPhrase && (
-                <p className="text-sm text-blue-800">
-                  <strong>Better phrase:</strong> {post.aiSuggestions.betterPhrase}
-                </p>
+                <span className="text-xs text-gray-500">
+                  +{post.tags.length - 5} more
+                </span>
               )}
             </div>
           )}
 
           {/* Footer Actions */}
-          <div className="flex items-center space-x-4 text-sm text-gray-500">
+          <div className="flex items-center space-x-4 text-xs text-gray-500 font-bold">
             <Link
               to={`/post/${post._id}`}
-              className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+              className="flex items-center space-x-1 hover:bg-gray-100 p-1 rounded transition-colors"
             >
               <MessageCircle size={16} />
-              <span>{post.commentCount} comments</span>
+              <span>{post.commentCount} Comments</span>
             </Link>
             
-            <button className="flex items-center space-x-1 hover:text-gray-700 transition-colors">
+            <button className="flex items-center space-x-1 hover:bg-gray-100 p-1 rounded transition-colors">
               <Share2 size={16} />
               <span>Share</span>
             </button>
 
-            <div className="flex items-center space-x-1 ml-auto">
-              <User size={14} />
-              <span className="text-xs">
-                {post.author.englishLevel} • {post.author.karma} karma
-              </span>
-            </div>
+            <button className="flex items-center space-x-1 hover:bg-gray-100 p-1 rounded transition-colors">
+              <ExternalLink size={16} />
+              <span>Save</span>
+            </button>
+
+            <button className="flex items-center space-x-1 hover:bg-gray-100 p-1 rounded transition-colors ml-auto">
+              <MoreHorizontal size={16} />
+            </button>
           </div>
         </div>
       </div>
